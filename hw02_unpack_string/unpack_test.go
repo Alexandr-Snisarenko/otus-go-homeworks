@@ -51,7 +51,7 @@ er3
 }
 
 func TestUnpackInvalidString(t *testing.T) {
-	invalidStrings := []string{"3abc", "45", "aaa10b", "aa2tt34"}
+	invalidStrings := []string{"3abc", "45", "aaa10b", "aa2tt34", "a3456T"}
 	for _, tc := range invalidStrings {
 		tc := tc
 		t.Run(tc, func(t *testing.T) {

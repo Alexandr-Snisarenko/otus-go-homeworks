@@ -2,6 +2,7 @@ package hw02unpackstring
 
 import (
 	"errors"
+	"fmt"
 	"strconv"
 	"strings"
 )
@@ -17,7 +18,7 @@ func Unpack(s string) (string, error) {
 	}
 	// первый символ не должен быть цифрой
 	if isNumber(rArr[0]) {
-		return "", ErrInvalidString
+		return "", fmt.Errorf("start from number: %w", ErrInvalidString)
 	}
 
 	// алгоритм следующий: анализируем текущий символ, печатаем предыдущий.
@@ -29,7 +30,7 @@ func Unpack(s string) (string, error) {
 	for i := 1; i < len(rArr); i++ {
 		if repeatCnt, err := strconv.Atoi(string(rArr[i])); err == nil {
 			if isNumber(rArr[i-1]) {
-				return "", ErrInvalidString
+				return "", fmt.Errorf("two numbers in a row: %w", ErrInvalidString)
 			}
 			sBldr.WriteString(strings.Repeat(string(rArr[i-1]), repeatCnt))
 		} else if !isNumber(rArr[i-1]) {
