@@ -23,13 +23,13 @@ er3
 		{input: "", expected: ""},
 		{input: "aaa0b", expected: "aab"},
 		{input: "  2  ", expected: "     "},
-		//non-printed symbols and escape symbols in string
+		// non-printed symbols and escape symbols in string
 		{input: "aa2\n2\b3", expected: "aaa\n\n\b\b\b"},
 		{input: "aa2\\n2\\t3", expected: "aaa\\nn\\ttt"},
-		//encoded strings
+		// encoded strings
 		{input: "\u65e53\u672c2\u8a9e", expected: "\u65e5\u65e5\u65e5\u672c\u672c\u8a9e"},
 		{input: "\U000065e52\U0000672c\U00008a9e2", expected: "\U000065e5\U000065e5\U0000672c\U00008a9e\U00008a9e"},
-		//backquoted strings
+		// backquoted strings
 		{input: `a2\n3\2a`, expected: `aa\nnn\\a`},
 		{input: testStr, expected: "test\n\n\nerrr\n\n  "},
 
