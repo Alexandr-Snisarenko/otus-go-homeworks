@@ -7,8 +7,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// русский текст
-var ru_text = `Как видите, он  спускается  по  лестнице  вслед  за  своим
+// русский текст.
+var ruText = `Как видите, он  спускается  по  лестнице  вслед  за  своим
 	другом   Кристофером   Робином,   головой   вниз,  пересчитывая
 	ступеньки собственным затылком:  бум-бум-бум.  Другого  способа
 	сходить  с  лестницы  он  пока  не  знает.  Иногда ему, правда,
@@ -42,10 +42,10 @@ var ru_text = `Как видите, он  спускается  по  лестн
 	посидеть у огня и послушать какую-нибудь интересную сказку.
 		В этот вечер...`
 
-var expected_ru_string_set = "а он и ты что в его если кристофер не"
+var expectedRuStringSet = "а он и ты что в его если кристофер не"
 
-// английский текст
-var en_text = `Go provides two features that replace class inheritance.[citation needed]
+// английский текст.
+var enText = `Go provides two features that replace class inheritance.[citation needed]
 The first is embedding, which can be viewed as an automated form of composition.[70]
 The second are its interfaces, which provides runtime polymorphism.
 Interfaces are a class of types and provide a limited form of structural typing in the 
@@ -58,16 +58,16 @@ it usually implies that type conformance is not statically checked. Because conf
 to a Go interface is checked statically by the Go compiler (except when performing a type assertion), 
 the Go authors prefer the term structural typing.`
 
-var expected_en_string_set = "the go of is a type interfaces typing an and"
+var expectedEnStringSet = "the go of is a type interfaces typing an and"
 
-// текст на санскрите (не знаю что там. что то при цветы и фрукты. взято из сети для теста ))
-var sanskrit_test = `कुसुमानि च फलानि च
+// текст на санскрите (не знаю что там. что то при цветы и фрукты. взято из сети для теста )).
+var sanskritTest = `कुसुमानि च फलानि च
 देवान् कुसुमैः पूजयन्ति नराः 
 फलैर् अपि पूजयन्ति 
 कुसुमानि च फलानि च वनाद् आनयामि 
 देवदत्तेन सह तत्र गच्छामि 
 कुसुमानि च फलानि च वनस्य वृक्षेषु रोहन्ति`
-var expected_sanskrit_string_set = "च कुसुमानि फलानि पूजयन्ति अपि आनयामि कुसुमैः गच्छामि तत्र देवदत्तेन"
+var expectedSanskritStringSet = "च कुसुमानि फलानि पूजयन्ति अपि आनयामि कुसुमैः गच्छामि तत्र देवदत्तेन"
 
 func TestTop10(t *testing.T) {
 	t.Run("no words in empty string", func(t *testing.T) {
@@ -83,18 +83,17 @@ func TestTop10(t *testing.T) {
 	})
 
 	t.Run("positive russian test", func(t *testing.T) {
-		expected := strings.Fields(expected_ru_string_set)
-		require.Equal(t, expected, Top10(ru_text))
+		expected := strings.Fields(expectedRuStringSet)
+		require.Equal(t, expected, Top10(ruText))
 	})
 
 	t.Run("positive english test", func(t *testing.T) {
-		expected := strings.Fields(expected_en_string_set)
-		require.Equal(t, expected, Top10(en_text))
+		expected := strings.Fields(expectedEnStringSet)
+		require.Equal(t, expected, Top10(enText))
 	})
 
 	t.Run("positive sanskrit test", func(t *testing.T) {
-		expected := strings.Fields(expected_sanskrit_string_set)
-		require.Equal(t, expected, Top10(sanskrit_test))
+		expected := strings.Fields(expectedSanskritStringSet)
+		require.Equal(t, expected, Top10(sanskritTest))
 	})
-
 }
