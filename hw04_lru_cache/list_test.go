@@ -91,7 +91,6 @@ func TestList(t *testing.T) {
 		l.Back().Value = l2
 
 		require.Equal(t, "10, test, 10.45", l.String()) // l.String(...l2.String())
-
 	})
 
 	t.Run("search and move", func(t *testing.T) {
@@ -144,5 +143,4 @@ func TestList(t *testing.T) {
 		err = l2.SafeRemove(iLst)
 		require.NoError(t, err)
 	})
-
 }
