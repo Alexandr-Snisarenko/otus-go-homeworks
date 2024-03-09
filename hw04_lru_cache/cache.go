@@ -24,7 +24,7 @@ type lruCache struct {
 	items    map[Key]*ListItem
 }
 
-func NewCache(capacity int) *lruCache {
+func NewCache(capacity int) Cache {
 	return &lruCache{
 		capacity: capacity,
 		queue:    NewList(),
@@ -41,15 +41,16 @@ func (c *lruCache) Set(key Key, value interface{}) bool {
 		i.Value = quValue{key, value}
 		c.queue.MoveToFront(i)
 		return true
-	} else { //если записи по ключу нет добавляем новую в начало очереди
-		c.items[key] = c.queue.PushFront(quValue{key, value})
-		// после добавления записи проверяем объем кеша. если записей больше чем capacity - удаляем крйнюю (с хвоста)
-		if c.queue.Len() > c.capacity {
-			delete(c.items, c.queue.Back().Value.(quValue).key)
-			c.queue.Remove(c.queue.Back())
-		}
-		return false
 	}
+
+	//если записи по ключу нет добавляем новую в начало очереди
+	c.items[key] = c.queue.PushFront(quValue{key, value})
+	// после добавления записи проверяем объем кеша. если записей больше чем capacity - удаляем крйнюю (с хвоста)
+	if c.queue.Len() > c.capacity {
+		delete(c.items, c.queue.Back().Value.(quValue).key)
+		c.queue.Remove(c.queue.Back())
+	}
+	return false
 }
 
 func (c *lruCache) Get(key Key) (interface{}, bool) {

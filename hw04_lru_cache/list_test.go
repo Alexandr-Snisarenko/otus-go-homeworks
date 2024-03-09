@@ -19,29 +19,6 @@ func TestList(t *testing.T) {
 		require.Nil(t, l.Back())
 	})
 
-	// table test
-	t.Run("stringer interface", func(t *testing.T) {
-		tests := []struct {
-			name     string
-			items    []interface{}
-			expected string
-		}{
-			{"empty", []interface{}{}, ""},
-			{"strings", []interface{}{"Test test", "12345", "\n\t"}, "Test test, 12345, \n\t"},
-			{"multitype", []interface{}{"-128", 10, 11.5}, "-128, 10, 11.5"},
-		}
-		for _, tc := range tests {
-			tc := tc
-			t.Run(tc.name, func(t *testing.T) {
-				l := NewList()
-				for _, v := range tc.items {
-					l.PushBack(v)
-				}
-				require.Equal(t, tc.expected, fmt.Sprint(l))
-			})
-		}
-	})
-
 	t.Run("complex", func(t *testing.T) {
 		l := NewList()
 
@@ -49,7 +26,6 @@ func TestList(t *testing.T) {
 		l.PushBack(20)  // [10, 20]
 		l.PushBack(30)  // [10, 20, 30]
 		require.Equal(t, 3, l.Len())
-		require.Equal(t, "10, 20, 30", l.String())
 
 		middle := l.Front().Next // 20
 		l.Remove(middle)         // [10, 30]
@@ -66,7 +42,6 @@ func TestList(t *testing.T) {
 		require.Equal(t, 7, l.Len())
 		require.Equal(t, 80, l.Front().Value)
 		require.Equal(t, 70, l.Back().Value)
-		require.Equal(t, "80, 60, 40, 10, 30, 50, 70", l.String())
 
 		l.MoveToFront(l.Front()) // [80, 60, 40, 10, 30, 50, 70]
 		l.MoveToFront(l.Back())  // [70, 80, 60, 40, 10, 30, 50]
@@ -78,8 +53,32 @@ func TestList(t *testing.T) {
 		require.Equal(t, []int{70, 80, 60, 40, 10, 30, 50}, elems)
 	})
 
+	/// Дополнительные тесты по объекту list
+	// table test
+	t.Run("stringer interface", func(t *testing.T) {
+		tests := []struct {
+			name     string
+			items    []interface{}
+			expected string
+		}{
+			{"empty", []interface{}{}, ""},
+			{"strings", []interface{}{"Test test", "12345", "\n\t"}, "Test test, 12345, \n\t"},
+			{"multitype", []interface{}{"-128", 10, 11.5}, "-128, 10, 11.5"},
+		}
+		for _, tc := range tests {
+			tc := tc
+			t.Run(tc.name, func(t *testing.T) {
+				l := new(list)
+				for _, v := range tc.items {
+					l.PushBack(v)
+				}
+				require.Equal(t, tc.expected, fmt.Sprint(l))
+			})
+		}
+	})
+
 	t.Run("untyped list", func(t *testing.T) {
-		l := NewList()
+		l := new(list)
 
 		l.PushFront(10)    // [10]
 		l.PushBack("test") // [10, 20]
@@ -96,7 +95,7 @@ func TestList(t *testing.T) {
 	})
 
 	t.Run("search and move", func(t *testing.T) {
-		l := NewList()
+		l := new(list)
 
 		l.PushFront(10)           // [10]
 		l.PushBack("test")        // [10, 20]
@@ -120,7 +119,7 @@ func TestList(t *testing.T) {
 		require.Nil(t, err)
 		require.NotEqual(t, iLst, iLstNext)
 
-		l2 := NewList()
+		l2 := new(list)
 		l2.PushFront(10)
 		l2.PushBack(20)
 		l2.PushBack(20)

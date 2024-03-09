@@ -29,7 +29,7 @@ type list struct {
 	length int
 }
 
-func NewList() *list {
+func NewList() List {
 	return new(list)
 }
 
@@ -80,10 +80,6 @@ func (l *list) PushBack(item interface{}) *ListItem {
 	return newItem
 }
 
-// потенциально опасная операция. в item может быть передан элемент от другого списка (см. тест по SearchNext)
-// по хорошему - нужно проверить на принадлежность элемента текущему списку через checkItem
-// но тогда - не будет О(1)
-// учитывая, что в данной реализации предполагается использовать лист как внутреннюю структуру кеша - то норм.
 func (l *list) Remove(item *ListItem) {
 	if item == nil {
 		return
@@ -106,7 +102,6 @@ func (l *list) Remove(item *ListItem) {
 	l.length--
 }
 
-// та же ситуация, что и с Remove() (см. выше)
 func (l *list) MoveToFront(item *ListItem) {
 	if item == nil {
 		return
@@ -115,13 +110,13 @@ func (l *list) MoveToFront(item *ListItem) {
 	l.front.Prev = item
 	item.Next = l.front
 	l.front = item
-	l.length++ //приводим length в норму после Remove()
+	l.length++ // приводим length в норму после Remove()
 }
 
 //////////////////////////////////////////////////////////////////////////////////////
-// Ф-ии для полноценного использования листа как отдельной либы
+// Доп ф-ии для полноценного использования листа как отдельной либы.
 
-// Защищенный Remove
+// Защищенный Remove.
 func (l *list) SafeRemove(item *ListItem) error {
 	if !l.checkItem(item) {
 		return errors.New(ErrEnotherListItem)
@@ -131,7 +126,7 @@ func (l *list) SafeRemove(item *ListItem) error {
 	return nil
 }
 
-// Защищенный MoveToFront
+// Защищенный MoveToFront.
 func (l *list) SafeMoveToFront(item *ListItem) error {
 	if !l.checkItem(item) {
 		return errors.New(ErrEnotherListItem)
@@ -141,7 +136,7 @@ func (l *list) SafeMoveToFront(item *ListItem) error {
 	return nil
 }
 
-// ищем элемент с указанным значением начиная от указанного
+// ищем элемент с указанным значением начиная от указанного.
 func (l *list) SearchNext(startItem *ListItem, v interface{}) (*ListItem, error) {
 	if !l.checkItem(startItem) {
 		return nil, errors.New(ErrEnotherListItem)
@@ -156,13 +151,13 @@ func (l *list) SearchNext(startItem *ListItem, v interface{}) (*ListItem, error)
 	return nil, nil
 }
 
-// возвращаем первый найденный по содержимому элемент списка
+// возвращаем первый найденный по содержимому элемент списка.
 func (l *list) SearchFirst(v interface{}) *ListItem {
 	item, _ := l.SearchNext(l.front, v)
 	return item
 }
 
-// проверяем принадлежит ли указанный элемент списка текущему листу
+// проверяем принадлежит ли указанный элемент списка текущему листу.
 func (l *list) checkItem(item *ListItem) bool {
 	if item == nil {
 		return false
