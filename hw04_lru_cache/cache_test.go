@@ -52,7 +52,6 @@ func TestCache(t *testing.T) {
 		val, ok = c.Get("aaa")
 		require.False(t, ok)
 		require.Nil(t, val)
-
 	})
 
 	t.Run("purge logic", func(t *testing.T) {
@@ -79,7 +78,6 @@ func TestCache(t *testing.T) {
 		val, ok = c.Get("4")
 		require.False(t, ok)
 		require.Nil(t, val)
-
 	})
 }
 
@@ -104,6 +102,5 @@ func TestCacheMultithreading(t *testing.T) {
 		}()
 
 		wg.Wait()
-
 	})
 }

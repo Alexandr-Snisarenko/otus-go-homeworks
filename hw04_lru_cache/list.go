@@ -177,7 +177,7 @@ func (l list) String() string {
 		if i == l.front {
 			res = fmt.Sprintf("%v", i.Value)
 		} else {
-			res = res + fmt.Sprintf(", %v", i.Value)
+			res += fmt.Sprintf(", %v", i.Value)
 		}
 	}
 	return res
