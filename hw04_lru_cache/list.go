@@ -5,6 +5,8 @@ import (
 	"fmt"
 )
 
+var ErrEnotherListItem = "данный элемент не принадлежит текущему списку"
+
 type List interface {
 	Len() int
 	Front() *ListItem
@@ -78,8 +80,10 @@ func (l *list) PushBack(item interface{}) *ListItem {
 	return newItem
 }
 
-// потенциально опасная операция. в item может быть передан элемент от другого списка
-// но иначе - не будет О(1)
+// потенциально опасная операция. в item может быть передан элемент от другого списка (см. тест по SearchNext)
+// по хорошему - нужно проверить на принадлежность элемента текущему списку через checkItem
+// но тогда - не будет О(1)
+// учитывая, что в данной реализации предполагается использовать лист как внутреннюю структуру кеша - то норм.
 func (l *list) Remove(item *ListItem) {
 	if item == nil {
 		return
@@ -102,7 +106,7 @@ func (l *list) Remove(item *ListItem) {
 	l.length--
 }
 
-// та же ситуация, что и с Remove()
+// та же ситуация, что и с Remove() (см. выше)
 func (l *list) MoveToFront(item *ListItem) {
 	if item == nil {
 		return
@@ -111,16 +115,39 @@ func (l *list) MoveToFront(item *ListItem) {
 	l.front.Prev = item
 	item.Next = l.front
 	l.front = item
-	l.length++
+	l.length++ //приводим length в норму после Remove()
+}
+
+//////////////////////////////////////////////////////////////////////////////////////
+// Ф-ии для полноценного использования листа как отдельной либы
+
+// Защищенный Remove
+func (l *list) SafeRemove(item *ListItem) error {
+	if !l.checkItem(item) {
+		return errors.New(ErrEnotherListItem)
+	}
+
+	l.Remove(item)
+	return nil
+}
+
+// Защищенный MoveToFront
+func (l *list) SafeMoveToFront(item *ListItem) error {
+	if !l.checkItem(item) {
+		return errors.New(ErrEnotherListItem)
+	}
+
+	l.MoveToFront(item)
+	return nil
 }
 
 // ищем элемент с указанным значением начиная от указанного
 func (l *list) SearchNext(startItem *ListItem, v interface{}) (*ListItem, error) {
 	if !l.checkItem(startItem) {
-		return nil, errors.New("данный элемент не принадлежит текущему списку")
+		return nil, errors.New(ErrEnotherListItem)
 	}
 
-	for i := startItem; i != nil; i = i.Next {
+	for i := startItem.Next; i != nil; i = i.Next {
 		if i.Value == v {
 			return i, nil
 		}

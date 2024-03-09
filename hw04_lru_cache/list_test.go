@@ -112,6 +112,38 @@ func TestList(t *testing.T) {
 
 		require.Equal(t, "10, 20, 30, test, second test", l.String())
 
+		l.PushBack(20)
+		l.PushBack(20)
+
+		iLst := l.SearchFirst(20)
+		iLstNext, err := l.SearchNext(iLst, 20)
+		require.Nil(t, err)
+		require.NotEqual(t, iLst, iLstNext)
+
+		l2 := NewList()
+		l2.PushFront(10)
+		l2.PushBack(20)
+		l2.PushBack(20)
+
+		// проверяем на поиск от элемента чужого списка (iList - элемент другого списка)
+		iLstNext, err = l2.SearchNext(iLst, 20)
+		require.Nil(t, iLstNext)
+		require.EqualError(t, err, ErrEnotherListItem)
+
+		err = l2.SafeRemove(iLst)
+		require.EqualError(t, err, ErrEnotherListItem)
+
+		err = l2.SafeMoveToFront(iLst)
+		require.EqualError(t, err, ErrEnotherListItem)
+
+		// безопасные операции по элементу своего листа
+		iLst = l2.SearchFirst(20)
+
+		err = l2.SafeMoveToFront(iLst)
+		require.NoError(t, err)
+
+		err = l2.SafeRemove(iLst)
+		require.NoError(t, err)
 	})
 
 }
