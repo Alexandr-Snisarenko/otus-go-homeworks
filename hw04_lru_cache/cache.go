@@ -11,7 +11,7 @@ type Cache interface {
 }
 
 // Структура quValue для хранения в списке пар ключ, значение
-// для обеспечения сложности О(1) при операциях с кешем
+// для обеспечения сложности О(1) при операциях с кешем.
 type quValue struct {
 	key   Key
 	value interface{}
@@ -43,7 +43,7 @@ func (c *lruCache) Set(key Key, value interface{}) bool {
 		return true
 	}
 
-	//если записи по ключу нет добавляем новую в начало очереди
+	// если записи по ключу нет добавляем новую в начало очереди
 	c.items[key] = c.queue.PushFront(quValue{key, value})
 	// после добавления записи проверяем объем кеша. если записей больше чем capacity - удаляем крйнюю (с хвоста)
 	if c.queue.Len() > c.capacity {
