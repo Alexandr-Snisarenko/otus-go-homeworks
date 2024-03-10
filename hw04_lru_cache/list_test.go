@@ -27,7 +27,6 @@ func TestList(t *testing.T) {
 		require.Equal(t, l.Front(), l.Back())
 
 		l.MoveToFront(l.Front())
-
 		l.Remove(l.Front())
 
 		require.Equal(t, 0, l.Len())
