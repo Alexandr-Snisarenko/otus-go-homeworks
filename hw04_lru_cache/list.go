@@ -85,6 +85,13 @@ func (l *list) Remove(item *ListItem) {
 		return
 	}
 
+	if l.length == 1 {
+		l.back = nil
+		l.front = nil
+		l.length = 0
+		return
+	}
+
 	switch item {
 	case l.front:
 		l.front = item.Next
@@ -106,6 +113,10 @@ func (l *list) MoveToFront(item *ListItem) {
 	if item == nil {
 		return
 	}
+	if item == l.front {
+		return
+	}
+
 	l.Remove(item) // удалили элемент length уменьшилась на 1
 	l.front.Prev = item
 	item.Next = l.front

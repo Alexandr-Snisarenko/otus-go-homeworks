@@ -44,12 +44,15 @@ func (c *lruCache) Set(key Key, value interface{}) bool {
 	}
 
 	// если записи по ключу нет добавляем новую в начало очереди
-	c.items[key] = c.queue.PushFront(quValue{key, value})
-	// после добавления записи проверяем объем кеша. если записей больше чем capacity - удаляем крйнюю (с хвоста)
-	if c.queue.Len() > c.capacity {
+	// проверяем объем кеша. если количество записей равно capacity - удаляем крйнюю (с хвоста)
+	if c.queue.Len() == c.capacity {
 		delete(c.items, c.queue.Back().Value.(quValue).key)
 		c.queue.Remove(c.queue.Back())
 	}
+
+	// Добавляем новую запись в начало кеша
+	c.items[key] = c.queue.PushFront(quValue{key, value})
+
 	return false
 }
 
@@ -72,5 +75,4 @@ func (c *lruCache) Clear() {
 
 	c.queue = NewList()
 	c.items = make(map[Key]*ListItem, c.capacity)
-	c.capacity = 0
 }

@@ -79,6 +79,30 @@ func TestCache(t *testing.T) {
 		require.False(t, ok)
 		require.Nil(t, val)
 	})
+
+	t.Run("clear cache", func(t *testing.T) {
+		c := NewCache(3)
+		c.Set("1", 10)
+		c.Set("2", 20)
+		c.Set("3", 30)
+
+		val, ok := c.Get("1")
+		require.True(t, ok)
+		require.Equal(t, val, 10)
+
+		c.Clear()
+
+		val, ok = c.Get("1")
+		require.False(t, ok)
+		require.Nil(t, val)
+
+		c.Set("1", 10)
+
+		val, ok = c.Get("1")
+		require.True(t, ok)
+		require.Equal(t, val, 10)
+
+	})
 }
 
 func TestCacheMultithreading(t *testing.T) {
