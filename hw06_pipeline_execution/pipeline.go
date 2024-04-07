@@ -21,7 +21,6 @@ func ExecutePipeline(in In, done In, stages ...Stage) Out {
 		return stgOut
 	}
 
-	stgIn = in
 	for _, f := range stages {
 		// для возможности прерывания всех каналов и ввиду того, что сигнатуру стейджей менять нельзя
 		// в отдельных рутинах перепаковываем входной канал для каждого стейджа
@@ -36,7 +35,6 @@ func ExecutePipeline(in In, done In, stages ...Stage) Out {
 						return
 					}
 					lclIn <- data
-
 				case <-done:
 					return
 				}
