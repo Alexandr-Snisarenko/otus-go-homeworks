@@ -14,7 +14,8 @@ func ExecutePipeline(in In, done In, stages ...Stage) Out {
 		stgIn  In
 		stgOut Out
 	)
-	stgOut = nil
+	stgIn = in
+	stgOut = stgIn
 
 	if in == nil {
 		return stgOut
@@ -31,11 +32,11 @@ func ExecutePipeline(in In, done In, stages ...Stage) Out {
 			for {
 				select {
 				case data, ok := <-stgIn:
-					if ok {
-						lclIn <- data
-					} else {
+					if !ok {
 						return
 					}
+					lclIn <- data
+
 				case <-done:
 					return
 				}

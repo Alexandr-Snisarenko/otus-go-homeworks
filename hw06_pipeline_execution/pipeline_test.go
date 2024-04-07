@@ -97,8 +97,21 @@ func TestPipeline(t *testing.T) {
 	})
 
 	t.Run("empty stages case", func(t *testing.T) {
+		in := make(Bi)
+		data := []int{1, 2, 3, 4, 5}
 		empStages := []Stage{}
-		out := ExecutePipeline(nil, nil, empStages...)
-		require.Nil(t, out)
+
+		go func() {
+			for _, v := range data {
+				in <- v
+			}
+			close(in)
+		}()
+
+		result := make([]int, 0, 5)
+		for s := range ExecutePipeline(in, nil, empStages...) {
+			result = append(result, s.(int))
+		}
+		require.Equal(t, []int{1, 2, 3, 4, 5}, result)
 	})
 }
