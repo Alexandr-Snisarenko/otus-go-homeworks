@@ -156,6 +156,10 @@ func Copy(fromPath, toPath string, offset, limit int64, rewrite bool) error {
 		bar.Add(cnt)
 	}
 
+	if err := outFile.Close(); err != nil {
+		return fmt.Errorf("cant close temporary destination file: %w", err)
+	}
+
 	if err := os.Rename(outFile.Name(), toPath); err != nil {
 		return fmt.Errorf("error rename temporary file to destination file: %w", err)
 	}
