@@ -6,7 +6,6 @@ import (
 	"io"
 	"io/fs"
 	"os"
-	"path/filepath"
 
 	"github.com/schollz/progressbar/v3"
 )
@@ -103,8 +102,7 @@ func Copy(fromPath, toPath string, offset, limit int64, rewrite bool) error {
 	defer inFile.Close()
 
 	// пишем во временный файл. потом переименовываем
-	dir, file := filepath.Split(toPath)
-	outFile, err = os.CreateTemp(dir, file+".*.tmp")
+	outFile, err = os.Create(toPath + ".tmp")
 	if err != nil {
 		return fmt.Errorf("can't create destination file: %w", err)
 	}
