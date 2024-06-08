@@ -38,7 +38,7 @@ func ReadDir(dir string) (Environment, error) {
 			return env, ErrEnvFileName
 		}
 
-		envVal, err := ReadEnvFile(dir + "\\" + file.Name())
+		envVal, err := ReadEnvFile(dir + "/" + file.Name())
 		if err != nil {
 			return env, err
 		}
@@ -52,7 +52,7 @@ func ReadDir(dir string) (Environment, error) {
 func ReadEnvFile(fName string) (EnvValue, error) {
 	var (
 		env        EnvValue
-		needRemove bool //false
+		needRemove bool
 		fLine      string
 	)
 
@@ -78,7 +78,7 @@ func ReadEnvFile(fName string) (EnvValue, error) {
 		// удаляем пробелі и табуляции
 		fLine = strings.TrimRight(fLine, "\t ")
 		// заменяем терминирующий 0x00 на перенос строки
-		fLine = string(bytes.Replace([]byte(fLine), []byte{0x00}[:], []byte("\n"), -1))
+		fLine = string(bytes.ReplaceAll([]byte(fLine), []byte{0x00}, []byte("\n")))
 	}
 
 	return EnvValue{fLine, needRemove}, nil

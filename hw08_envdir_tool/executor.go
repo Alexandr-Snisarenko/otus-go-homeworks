@@ -3,41 +3,62 @@ package main
 import (
 	"errors"
 	"os"
+	"os/exec"
 	"strings"
-	"syscall"
 )
 
-var ErrOsEnvironmentVariableFormat = errors.New(" environment variable string don't contain '=' ")
+var (
+	ErrOsEnvironmentVariableFormat = errors.New(" environment variable string don't contain '=' ")
+	ErrNoCommand                   = errors.New("call without command")
+)
 
 // RunCmd runs a command + arguments (cmd) with environment variables from env.
-func RunCmd(cmd []string, env Environment) error {
+func RunCmd(cmd []string, env Environment) (string, error) {
 	var (
 		newEnv []string
 		err    error
+		osCmd  *exec.Cmd
+		out    strings.Builder
 	)
+
 	if newEnv, err = parseOsEnv(env); err != nil {
-		return err
+		return "", err
 	}
 
-	err = syscall.Exec(cmd[0], cmd[1:], newEnv)
+	if len(cmd) == 0 {
+		return "", ErrNoCommand
+	}
+
+	command := cmd[0]
+	if len(cmd) == 1 {
+		osCmd = exec.Command(command)
+	} else {
+		osCmd = exec.Command(command, cmd[1:]...)
+	}
+	osCmd.Env = newEnv
+	osCmd.Stdout = &out
+	err = osCmd.Run()
 	if err != nil {
-		return err
+		return "", err
 	}
 
-	return nil
+	// возвращаем stdout выполненной команды
+	return out.String(), nil
 }
 
 // функция парсировки текущего системного списка переменных окружения
 // и формирования нового списка переменных окружения
-// с учетом входного словаря переменных "на замену"
+// с учетом входного словаря переменных "на замену" (env).
 // логика следующая:
-// 1 - переносим в новый список все переменные из системного списка, которых нет во входном словаре.
-// 2 - обрабатываем входной словарь и добавляем в новый список те переменные, у которых NeedRemove == false.
+// 1 - создаем новый пустой список для пересенных окружения.
+// 2 - в новый список переносим все переменные окружения из системного списка, которых нет во входном словаре (env).
+// 3 - обрабатываем входной словарь (env). добавляем в новый список те записи словаря env,
+// у которых NeedRemove == false.
 func parseOsEnv(env Environment) ([]string, error) {
 	// получаем список текущих переменных окружения
 	osEnv := os.Environ()
-	// массив для новых переменных окружения (примерно такой же длинны)
-	newEnv := make([]string, 0, len(osEnv))
+	// массив для новых переменных окружения (максимально возможной длинны)
+	newEnv := make([]string, 0, len(osEnv)+len(env))
 
 	// проходим по текущему системному списку переменных окружения
 	for _, osEnv := range osEnv {
