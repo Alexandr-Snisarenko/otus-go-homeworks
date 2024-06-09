@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"errors"
 	"os"
+	"path/filepath"
 	"strings"
 )
 
@@ -38,7 +39,7 @@ func ReadDir(dir string) (Environment, error) {
 			return env, ErrEnvFileName
 		}
 
-		envVal, err := ReadEnvFile(dir + "/" + file.Name())
+		envVal, err := ReadEnvFile(filepath.Join(dir, file.Name()))
 		if err != nil {
 			return env, err
 		}
@@ -67,10 +68,9 @@ func ReadEnvFile(fName string) (EnvValue, error) {
 		return env, err
 	}
 
-	// если размер 0 - ставим признак удаления переменной окружения
-	if fInfo.Size() == 0 {
-		needRemove = true
-	} else {
+	// если размер == 0  - пропускаем (признак needRemove = true).
+	// иначе, (если размер != 0) - обрабатываем содержимое файла
+	if needRemove = (fInfo.Size() == 0); !needRemove {
 		// если размер не 0 - читаем первую строку
 		fileScanner := bufio.NewScanner(cFile)
 		fileScanner.Scan()
