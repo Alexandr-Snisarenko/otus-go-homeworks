@@ -32,12 +32,25 @@ type ValidationError struct {
 type ValidationErrors []ValidationError
 
 func (v ValidationErrors) Error() string {
-	err := errors.New("validation errors ")
-	for _, vErr := range v {
-		err = fmt.Errorf("%w field:'%s'=> %w ", err, vErr.Field, vErr.Err)
+	if len(v) == 0 {
+		return ""
 	}
+	errStr := "validation errors: "
+	for _, vErr := range v {
+		errStr += fmt.Sprintf("field:'%s'=> %s ", vErr.Field, vErr.Err)
+	}
+	return errStr
+}
 
-	return err.Error()
+func (v ValidationErrors) Unwrap() error {
+	if len(v) == 0 {
+		return nil
+	}
+	err := errors.New("validation errors: ")
+	for _, vErr := range v {
+		err = fmt.Errorf("%w field:'%s'=> %w; ", err, vErr.Field, vErr.Err)
+	}
+	return err
 }
 
 func (v *ValidationErrors) AddErr(Field string, Err error) {
@@ -47,7 +60,7 @@ func (v *ValidationErrors) AddErr(Field string, Err error) {
 // функция валидации. на входе ожидаем структуру или указтельна структуру
 // завернутый в interface{}
 func Validate(v interface{}) error {
-	var vErr ValidationErrors
+
 	// если ничего не передали - выходим с ошибкой
 	if v == nil {
 		return errors.New("input parameter is not defined (is null)")
@@ -76,14 +89,19 @@ func Validate(v interface{}) error {
 	}
 
 	// обрабатываем поля структуры
+	vErr := make(ValidationErrors, 0, rType.NumField())
 	for i := 0; i < rType.NumField(); i++ {
 		err := ValidateField(rType.Field(i), rVal.Field(i))
 		if err != nil {
 			vErr = append(vErr, err...)
 		}
 	}
+	// если были ошибки - возвращаем их в интерфейсе error
+	if len(vErr) > 0 {
+		return vErr
+	}
 
-	return vErr
+	return nil
 }
 
 // валидация поля структуры

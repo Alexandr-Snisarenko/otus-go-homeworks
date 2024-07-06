@@ -162,8 +162,8 @@ func checkStringData(rSet *ValidateRuleSet, data string) error {
 	return nil
 }
 
-// / generics ////
-// функция парсировки данных из строки в int64 или uint64
+// // generics ////
+// функция парсировки данных из строки в number (int64 или uint64)
 func parseAnyInt[T int64 | uint64](val string) (T, error) {
 	var (
 		parsVal T

@@ -36,34 +36,142 @@ type (
 		Code int    `validate:"in:200,404,500"`
 		Body string `json:"omitempty"`
 	}
+
+	TestMinMax struct {
+		IntVal  int    `validate:"min:10|max:20"`
+		UintVal uint   `validate:"min:10|max:20"`
+		StrVal  string `validate:"min:10|max:20"`
+		StrVal2 string `validate:"min:10|max:20"`
+	}
+
+	TestInterface struct {
+		IntVal  interface{} `validate:"min:10|max:20"`
+		UintVal interface{} `validate:"min:10|max:20"`
+		StrVal  interface{} `validate:"min:10|max:20"`
+	}
+	TestUnsupported struct {
+		FloatVal float32 `validate:"min:10|max:20"`
+	}
 )
 
 func TestValidate(t *testing.T) {
 	tests := []struct {
-		in          interface{}
-		expectedErr error
+		in           interface{}
+		expectedErrs []error
 	}{
-		{
+		{ // invalid
+			App{
+				Version: "01.15.02",
+			},
+			[]error{ErrStringLength},
+		},
+		{ // valid
+			App{
+				Version: "01.00",
+			},
+			[]error{},
+		},
+		{ // invalid
+			User{
+				ID:     "4321343JH4KJ3H4K2341JK14324787236458",
+				Name:   "Jon",
+				Age:    35,
+				Email:  "test@mail.net",
+				Role:   "admin",
+				Phones: []string{"12315478545", "12345678901"},
+				meta:   nil,
+			},
+			[]error{},
+		},
+		{ // valid
 			User{
 				ID:     "4321343JH4KJ3H4K2341JK1432",
 				Name:   "Jon",
-				Age:    23,
-				Email:  "test@mail.net",
-				Role:   "admin",
+				Age:    15,
+				Email:  "test@mail",
+				Role:   "user",
 				Phones: []string{"12345", "12345678901"},
 				meta:   nil,
 			},
-			ErrStringLength,
+			[]error{ErrStringLength, ErrStringNotInSet, ErrStringContent, ErrNumberValue},
+		},
+		{ // ignore
+			Token{
+				Header:    []byte("12345"),
+				Payload:   []byte("6576"),
+				Signature: []byte("8878"),
+			},
+			[]error{},
+		},
+		{ // invalid
+			Response{
+				Code: 400,
+				Body: "test",
+			},
+			[]error{ErrNumberNotInSet},
+		},
+		{ // valid
+			Response{
+				Code: 200,
+				Body: "test",
+			},
+			[]error{},
+		},
+		{ // invalid
+			TestMinMax{
+				IntVal:  400,
+				UintVal: 1000,
+				StrVal:  "test",
+				StrVal2: "hkjhfkjsdfkjdfjkasdhfjksdhfkjsadhfskjd",
+			},
+			[]error{ErrNumberValue, ErrStringLength},
+		},
+		{ // valid
+			TestMinMax{
+				IntVal:  15,
+				UintVal: 15,
+				StrVal:  "test string",
+				StrVal2: "test string",
+			},
+			[]error{},
+		},
+		{ // invalid
+			TestInterface{
+				IntVal:  400,
+				UintVal: 1000,
+				StrVal:  "test",
+			},
+			[]error{ErrNumberValue, ErrStringLength},
+		},
+		{ // valid
+			TestInterface{
+				IntVal:  15,
+				UintVal: 15,
+				StrVal:  "test string",
+			},
+			[]error{},
+		},
+		{ // unsupported
+			TestUnsupported{
+				FloatVal: 15.23,
+			},
+			[]error{ErrNotValidatebleType},
 		},
 	}
 
 	for i, tt := range tests {
 		tt := tt
 		t.Run(fmt.Sprintf("case %d", i), func(t *testing.T) {
-			t.Parallel()
+			//t.Parallel()
 			err := Validate(tt.in)
-			fmt.Println(err)
-			require.ErrorContains(t, err, tt.expectedErr.Error())
+			if len(tt.expectedErrs) > 0 {
+				for _, tErr := range tt.expectedErrs {
+					require.ErrorIs(t, err, tErr)
+				}
+			} else {
+				require.NoError(t, err)
+			}
+
 		})
 	}
 }
