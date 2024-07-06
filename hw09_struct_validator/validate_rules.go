@@ -114,10 +114,6 @@ func (v *ValidateRuleSet) CheckData(data interface{}) error {
 // ввиду ограничения для дженериков в методах.
 func checkStringData(rSet *ValidateRuleSet, data string) error {
 	for rule, val := range *rSet {
-		if !slices.Contains(StringValidateRules, rule) {
-			return ErrInvalidRuleDataType
-		}
-
 		switch rule {
 		case vrLen:
 			chkVal, err := strconv.Atoi(val)
@@ -125,7 +121,7 @@ func checkStringData(rSet *ValidateRuleSet, data string) error {
 				return ErrInvalidValidateRuleParam
 			}
 			if len(data) != chkVal {
-				return fmt.Errorf("%w not match given size", ErrStringLength)
+				return ErrStringLength
 			}
 		case vrMin:
 			chkVal, err := strconv.Atoi(val)
@@ -133,7 +129,7 @@ func checkStringData(rSet *ValidateRuleSet, data string) error {
 				return ErrInvalidValidateRuleParam
 			}
 			if len(data) < chkVal {
-				return fmt.Errorf("%w  less then 'min' size", ErrStringLength)
+				return ErrStringLength
 			}
 		case vrMax:
 			chkVal, err := strconv.Atoi(val)
@@ -141,7 +137,7 @@ func checkStringData(rSet *ValidateRuleSet, data string) error {
 				return ErrInvalidValidateRuleParam
 			}
 			if len(data) > chkVal {
-				return fmt.Errorf("%w greate then 'max' size", ErrStringLength)
+				return ErrStringLength
 			}
 		case vrRegexp:
 			rexp, err := regexp.Compile(val)
