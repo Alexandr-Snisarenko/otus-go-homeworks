@@ -7,9 +7,9 @@ import (
 	"slices"
 )
 
-var ErrNotValidatebleType error = errors.New("type of field not validateble")
+var ErrNotValidatebleType = errors.New("type of field not validateble")
 
-// перечень поддерживаемых типов полей для валидации
+// перечень поддерживаемых типов полей для валидации.
 var validatedTypes = []reflect.Kind{
 	reflect.Int,
 	reflect.Int8,
@@ -53,14 +53,13 @@ func (v ValidationErrors) Unwrap() error {
 	return err
 }
 
-func (v *ValidationErrors) AddErr(Field string, Err error) {
-	*v = append(*v, ValidationError{Field, Err})
+func (v *ValidationErrors) AddErr(field string, err error) {
+	*v = append(*v, ValidationError{field, err})
 }
 
 // функция валидации. на входе ожидаем структуру или указтельна структуру
-// завернутый в interface{}
+// завернутый в interface{}.
 func Validate(v interface{}) error {
-
 	// если ничего не передали - выходим с ошибкой
 	if v == nil {
 		return errors.New("input parameter is not defined (is null)")
@@ -104,7 +103,7 @@ func Validate(v interface{}) error {
 	return nil
 }
 
-// валидация поля структуры
+// валидация поля структуры.
 func ValidateField(cField reflect.StructField, cFieldVal reflect.Value) (vErr ValidationErrors) {
 	var (
 		vStr     string
@@ -141,7 +140,7 @@ func ValidateField(cField reflect.StructField, cFieldVal reflect.Value) (vErr Va
 	}
 
 	// формируем список правил по полю
-	if err, vRuleSet = NewValidateRuleSet(vStr); err != nil {
+	if vRuleSet, err = NewValidateRuleSet(vStr); err != nil {
 		vErr.AddErr(cField.Name, err)
 		return vErr
 	}

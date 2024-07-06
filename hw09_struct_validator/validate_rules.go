@@ -16,7 +16,7 @@ var (
 	ErrUnknownValidateRule       = errors.New("unknown validate rule")
 	ErrInvalidRuleDataType       = errors.New("rule from another data type")
 	ErrUnknownDataType           = errors.New("unknown data type")
-	// Validate Errors
+	// Validate Errors.
 	ErrStringLength   = errors.New("string length is not valid")
 	ErrStringContent  = errors.New("string content is not valid")
 	ErrStringNotInSet = errors.New("string is not in string set")
@@ -25,52 +25,52 @@ var (
 	ErrDataValidate   = errors.New("data is not valid")
 )
 
-// правила валидации
+// правила валидации.
 type ValidateRule uint
 
 const (
-	vr_unknown ValidateRule = iota
-	vr_len
-	vr_regexp
-	vr_in
-	vr_min
-	vr_max
+	vrUnknown ValidateRule = iota
+	vrLen
+	vrRegexp
+	vrIn
+	vrMin
+	vrMax
 )
 
-// мапинг правил на названия в строке
+// мапинг правил на названия в строке.
 var ValidateRuleNameMap = map[string]ValidateRule{
-	"len":    vr_len,
-	"regexp": vr_regexp,
-	"in":     vr_in,
-	"min":    vr_min,
-	"max":    vr_max,
+	"len":    vrLen,
+	"regexp": vrRegexp,
+	"in":     vrIn,
+	"min":    vrMin,
+	"max":    vrMax,
 }
 
-// перечень поддерживаемых правил для строк
+// перечень поддерживаемых правил для строк.
 var StringValidateRules = []ValidateRule{
-	vr_len,    // "len:32" - длина строки должна быть ровно 32 символа;
-	vr_regexp, // "regexp:\\d+" - согласно регулярному выражению строка должна состоять из цифр (\\ - экранирование слэша);
-	vr_in,     //"in:foo,bar" - строка должна входить в множество строк {"foo", "bar"}
-	vr_min,    // "min:10" - строка не может быть меньше 10 символов;
-	vr_max,    // "max:20" - строка не может быть больше 20 символов;
+	vrLen,    // "len:32" - длина строки должна быть ровно 32 символа;
+	vrRegexp, // "regexp:\\d+" - согласно регулярному выражению строка должна состоять из цифр (\\ - экранирование слэша);
+	vrIn,     // "in:foo,bar" - строка должна входить в множество строк {"foo", "bar"}
+	vrMin,    // "min:10" - строка не может быть меньше 10 символов;
+	vrMax,    // "max:20" - строка не может быть больше 20 символов;
 }
 
-// перечень поддерживаемых правил для чисел
+// перечень поддерживаемых правил для чисел.
 var NumberValidateRules = []ValidateRule{
-	vr_min, // "min:10" - число не может быть меньше 10;
-	vr_max, // "max:20" - число не может быть больше 20;
-	vr_in,  // "in:256,1024" - число должно входить в множество чисел {256, 1024};
+	vrMin, // "min:10" - число не может быть меньше 10;
+	vrMax, // "max:20" - число не может быть больше 20;
+	vrIn,  // "in:256,1024" - число должно входить в множество чисел {256, 1024};
 }
 
-// набор правил с параметрами кнтроля
+// набор правил с параметрами кнтроля.
 type ValidateRuleSet map[ValidateRule]string
 
-// конструктор для набора правил
-func NewValidateRuleSet(validateString string) (error, *ValidateRuleSet) {
+// конструктор для набора правил.
+func NewValidateRuleSet(validateString string) (*ValidateRuleSet, error) {
 	vSet := make(ValidateRuleSet)
 	// если строка правил не задана - возвращаем пустой RuleSet
 	if validateString == "" {
-		return nil, &vSet
+		return &vSet, nil
 	}
 
 	// если строка не пустая - разбираем строку и формируем список правил валидации
@@ -79,20 +79,20 @@ func NewValidateRuleSet(validateString string) (error, *ValidateRuleSet) {
 		// разделяем правило и контрольные значения по ":"
 		sRule, sVal, ok := strings.Cut(ruleStr, ":")
 		if !ok {
-			return ErrInvalidValidateRuleString, nil
+			return nil, ErrInvalidValidateRuleString
 		}
 		// если правила нет в общем списке правил - ошибка
 		rule, ok := ValidateRuleNameMap[sRule]
 		if !ok {
-			return ErrUnknownValidateRule, nil
+			return nil, ErrUnknownValidateRule
 		}
 		vSet[rule] = sVal
 	}
 
-	return nil, &vSet
+	return &vSet, nil
 }
 
-// проверка данных по списку правил
+// проверка данных по списку правил.
 func (v *ValidateRuleSet) CheckData(data interface{}) error {
 	// получаем объект за интерфейсом
 	rVal := reflect.ValueOf(data)
@@ -111,7 +111,7 @@ func (v *ValidateRuleSet) CheckData(data interface{}) error {
 }
 
 // методы для провеки значений по типам реализуются в виде отдельных функций
-// ввиду ограничения для дженериков в методах
+// ввиду ограничения для дженериков в методах.
 func checkStringData(rSet *ValidateRuleSet, data string) error {
 	for rule, val := range *rSet {
 		if !slices.Contains(StringValidateRules, rule) {
@@ -119,7 +119,7 @@ func checkStringData(rSet *ValidateRuleSet, data string) error {
 		}
 
 		switch rule {
-		case vr_len:
+		case vrLen:
 			chkVal, err := strconv.Atoi(val)
 			if err != nil {
 				return ErrInvalidValidateRuleParam
@@ -127,7 +127,7 @@ func checkStringData(rSet *ValidateRuleSet, data string) error {
 			if len(data) != chkVal {
 				return fmt.Errorf("%w not match given size", ErrStringLength)
 			}
-		case vr_min:
+		case vrMin:
 			chkVal, err := strconv.Atoi(val)
 			if err != nil {
 				return ErrInvalidValidateRuleParam
@@ -135,7 +135,7 @@ func checkStringData(rSet *ValidateRuleSet, data string) error {
 			if len(data) < chkVal {
 				return fmt.Errorf("%w  less then 'min' size", ErrStringLength)
 			}
-		case vr_max:
+		case vrMax:
 			chkVal, err := strconv.Atoi(val)
 			if err != nil {
 				return ErrInvalidValidateRuleParam
@@ -143,7 +143,7 @@ func checkStringData(rSet *ValidateRuleSet, data string) error {
 			if len(data) > chkVal {
 				return fmt.Errorf("%w greate then 'max' size", ErrStringLength)
 			}
-		case vr_regexp:
+		case vrRegexp:
 			rexp, err := regexp.Compile(val)
 			if err != nil {
 				return ErrInvalidValidateRuleParam
@@ -152,10 +152,12 @@ func checkStringData(rSet *ValidateRuleSet, data string) error {
 			if !rexp.MatchString(data) {
 				return ErrStringContent
 			}
-		case vr_in:
+		case vrIn:
 			if !slices.Contains(strings.Split(val, ","), data) {
 				return ErrStringNotInSet
 			}
+		default:
+			return ErrUnknownValidateRule
 		}
 	}
 
@@ -163,7 +165,7 @@ func checkStringData(rSet *ValidateRuleSet, data string) error {
 }
 
 // // generics ////
-// функция парсировки данных из строки в number (int64 или uint64)
+// функция парсировки данных из строки в number (int64 или uint64).
 func parseAnyInt[T int64 | uint64](val string) (T, error) {
 	var (
 		parsVal T
@@ -194,14 +196,15 @@ func parseAnyInt[T int64 | uint64](val string) (T, error) {
 	return parsVal, nil
 }
 
-// функця проверки параметров типа int64 или uint64
+// функця проверки параметров типа int64 или uint64.
 func checkNumberData[T int64 | uint64](rSet *ValidateRuleSet, data T) error {
 	for rule, val := range *rSet {
 		if !slices.Contains(NumberValidateRules, rule) {
 			return ErrInvalidRuleDataType
 		}
+
 		switch rule {
-		case vr_min:
+		case vrMin:
 			chkVal, err := parseAnyInt[T](val)
 			if err != nil {
 				return ErrInvalidValidateRuleParam
@@ -209,7 +212,7 @@ func checkNumberData[T int64 | uint64](rSet *ValidateRuleSet, data T) error {
 			if data < chkVal {
 				return fmt.Errorf("%w less then 'min' value", ErrNumberValue)
 			}
-		case vr_max:
+		case vrMax:
 			chkVal, err := parseAnyInt[T](val)
 			if err != nil {
 				return ErrInvalidValidateRuleParam
@@ -218,7 +221,7 @@ func checkNumberData[T int64 | uint64](rSet *ValidateRuleSet, data T) error {
 			if data > chkVal {
 				return fmt.Errorf("%w greate then 'max' value", ErrNumberValue)
 			}
-		case vr_in:
+		case vrIn:
 			// разбираем строку параметров на элементы
 			sSlice := strings.Split(val, ",")
 			// создаем пустой слайс под параметры типа int64 нужного размера
@@ -235,6 +238,8 @@ func checkNumberData[T int64 | uint64](rSet *ValidateRuleSet, data T) error {
 			if !slices.Contains(chkSlc, data) {
 				return ErrNumberNotInSet
 			}
+		default:
+			return ErrInvalidRuleDataType
 		}
 	}
 	return nil
