@@ -66,11 +66,11 @@ var NumberValidateRules = []ValidateRule{
 type ValidateRuleSet map[ValidateRule]string
 
 // конструктор для набора правил.
-func NewValidateRuleSet(validateString string) (*ValidateRuleSet, error) {
+func NewValidateRuleSet(validateString string) (ValidateRuleSet, error) {
 	vSet := make(ValidateRuleSet)
 	// если строка правил не задана - возвращаем пустой RuleSet
 	if validateString == "" {
-		return &vSet, nil
+		return vSet, nil
 	}
 
 	// если строка не пустая - разбираем строку и формируем список правил валидации
@@ -89,11 +89,11 @@ func NewValidateRuleSet(validateString string) (*ValidateRuleSet, error) {
 		vSet[rule] = sVal
 	}
 
-	return &vSet, nil
+	return vSet, nil
 }
 
 // проверка данных по списку правил.
-func (v *ValidateRuleSet) CheckData(data interface{}) error {
+func (v ValidateRuleSet) CheckData(data interface{}) error {
 	// получаем объект за интерфейсом
 	rVal := reflect.ValueOf(data)
 
@@ -112,8 +112,8 @@ func (v *ValidateRuleSet) CheckData(data interface{}) error {
 
 // методы для провеки значений по типам реализуются в виде отдельных функций
 // ввиду ограничения для дженериков в методах.
-func checkStringData(rSet *ValidateRuleSet, data string) error {
-	for rule, val := range *rSet {
+func checkStringData(rSet ValidateRuleSet, data string) error {
+	for rule, val := range rSet {
 		switch rule {
 		case vrLen:
 			chkVal, err := strconv.Atoi(val)
@@ -193,8 +193,8 @@ func parseAnyInt[T int64 | uint64](val string) (T, error) {
 }
 
 // функця проверки параметров типа int64 или uint64.
-func checkNumberData[T int64 | uint64](rSet *ValidateRuleSet, data T) error {
-	for rule, val := range *rSet {
+func checkNumberData[T int64 | uint64](rSet ValidateRuleSet, data T) error {
+	for rule, val := range rSet {
 		if !slices.Contains(NumberValidateRules, rule) {
 			return ErrInvalidRuleDataType
 		}

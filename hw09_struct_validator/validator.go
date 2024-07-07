@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"reflect"
 	"slices"
+	"strings"
 )
 
 var ErrNotValidatebleType = errors.New("type of field not validateble")
@@ -35,11 +36,13 @@ func (v ValidationErrors) Error() string {
 	if len(v) == 0 {
 		return ""
 	}
-	errStr := "validation errors: "
+	sB := new(strings.Builder)
+	sB.WriteString("validation errors: ")
 	for _, vErr := range v {
-		errStr += fmt.Sprintf("field:'%s'=> %s ", vErr.Field, vErr.Err)
+		sB.WriteString(fmt.Sprintf("field:'%s'=> %s ", vErr.Field, vErr.Err))
 	}
-	return errStr
+
+	return sB.String()
 }
 
 func (v ValidationErrors) Unwrap() error {
@@ -107,7 +110,7 @@ func Validate(v interface{}) error {
 func ValidateField(cField reflect.StructField, cFieldVal reflect.Value) (vErr ValidationErrors) {
 	var (
 		vStr     string
-		vRuleSet *ValidateRuleSet
+		vRuleSet ValidateRuleSet
 		err      error
 		isArrey  bool
 	)
