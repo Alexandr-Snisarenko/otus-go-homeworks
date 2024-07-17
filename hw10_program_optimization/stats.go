@@ -2,6 +2,7 @@ package hw10programoptimization
 
 import (
 	"bufio"
+	"errors"
 	"io"
 	"strings"
 
@@ -32,7 +33,7 @@ func GetDomainStat(r io.Reader, domain string) (DomainStat, error) {
 		line, err := rder.ReadString('\n')
 		if err != nil {
 			// если ошибка == EOF ставим метку выхода и обрабатываем роследнюю строку
-			if err == io.EOF {
+			if errors.Is(err, io.EOF) {
 				exit = true
 			} else {
 				return nil, err

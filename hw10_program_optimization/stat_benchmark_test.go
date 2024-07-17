@@ -1,3 +1,6 @@
+//go:build !bench
+// +build !bench
+
 package hw10programoptimization
 
 import (
@@ -46,5 +49,4 @@ func BenchmarkGetDomainStat(b *testing.B) {
 			panic("error in test")
 		}
 	}
-
 }
