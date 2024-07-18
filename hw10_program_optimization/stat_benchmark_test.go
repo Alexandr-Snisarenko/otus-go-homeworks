@@ -14,39 +14,11 @@ var data = `{"Id":1,"Name":"Howard Mendoza","Username":"0Oliver","Email":"aliqui
 {"Id":4,"Name":"Gregory Reid","Username":"tButler","Email":"5Moore@Teklist.net","Phone":"520-04-16","Password":"r639qLNu","Address":"Sunfield Park 20"}
 {"Id":5,"Name":"Janice Rose","Username":"KeithHart","Email":"nulla@Linktype.com","Phone":"146-91-01","Password":"acSBF5","Address":"Russell Trail 61"}`
 
-// func BenchmarkGetUsers(b *testing.B) {
-// 	for i := 0; i < b.N; i++ {
-// 		_, err := getUsers(bytes.NewBufferString(data))
-// 		if err != nil {
-// 			panic("error in test")
-// 		}
-// 	}
-
-// }
-
-// func BenchmarkCountDomains(b *testing.B) {
-// 	b.StopTimer()
-// 	usr, err := getUsers(bytes.NewBufferString(data))
-// 	if err != nil {
-// 		panic("error in test")
-// 	}
-
-// 	b.StartTimer()
-// 	for i := 0; i < b.N; i++ {
-// 		_, err = countDomains(usr, "com")
-// 		if err != nil {
-// 			panic("error in test")
-// 		}
-// 	}
-// 	b.StopTimer()
-
-// }
-
 func BenchmarkGetDomainStat(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		_, err := GetDomainStat(bytes.NewBufferString(data), "com")
 		if err != nil {
-			panic("error in test")
+			b.Error(err)
 		}
 	}
 }
