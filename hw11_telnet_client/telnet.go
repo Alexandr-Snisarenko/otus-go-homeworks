@@ -15,9 +15,10 @@ var (
 )
 
 type TelnetClient interface {
-	Connect(context.Context) (<-chan struct{}, error)
+	Connect(context.Context) error
 	Close() error
 	IsActive() bool
+	Done() <-chan struct{}
 	// Send() error
 	// Receive() error
 }
@@ -28,20 +29,20 @@ type telnetClient struct {
 	done      chan struct{}
 	address   string
 	timeout   time.Duration
-	inReader  io.ReadCloser
+	inReader  io.Reader
 	outWriter io.Writer
 	errWriter io.Writer
 	conn      net.Conn
 }
 
-func (t *telnetClient) Connect(ctx context.Context) (<-chan struct{}, error) {
+func (t *telnetClient) Connect(ctx context.Context) error {
 	if t.active {
-		return nil, ErrConnectionAlreadyActive
+		return ErrConnectionAlreadyActive
 	}
 
 	conn, err := net.DialTimeout("tcp", t.address, t.timeout*time.Second)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	t.conn = conn
 	t.active = true
@@ -49,11 +50,9 @@ func (t *telnetClient) Connect(ctx context.Context) (<-chan struct{}, error) {
 
 	go func() {
 		defer t.Close()
-		chIn := reader2chan(t.done, t.inReader, t.errWriter, t.Close)
-		chConn := reader2chan(t.done, t.conn, t.errWriter, t.Close)
 
-		chan2writer(t.done, chIn, t.conn, t.errWriter, t.Close)
-		chan2writer(t.done, chConn, t.outWriter, t.errWriter, t.Close)
+		t.inBuf2outBuff(t.inReader, t.conn)
+		t.inBuf2outBuff(t.conn, t.outWriter)
 
 		for {
 			select {
@@ -66,8 +65,7 @@ func (t *telnetClient) Connect(ctx context.Context) (<-chan struct{}, error) {
 		}
 
 	}()
-
-	return t.done, nil
+	return nil
 }
 
 func (t *telnetClient) Close() error {
@@ -87,50 +85,36 @@ func (t *telnetClient) IsActive() bool {
 	return t.active
 }
 
-func NewTelnetClient(address string, timeout time.Duration, inReader io.ReadCloser, outWriter io.Writer, errWriter io.Writer) TelnetClient {
+func (t *telnetClient) Done() <-chan struct{} {
+	return t.done
+}
+
+func NewTelnetClient(address string, timeout time.Duration, inReader io.Reader, outWriter io.Writer, errWriter io.Writer) TelnetClient {
 	return &telnetClient{active: false, address: address, timeout: timeout, inReader: inReader, outWriter: outWriter, errWriter: errWriter}
 }
 
-func chan2writer(done <-chan struct{}, chIn <-chan string, bufOut io.Writer, bufErr io.Writer, closeConn func() error) {
+func (t *telnetClient) inBuf2outBuff(inBuf io.Reader, outBuf io.Writer) {
 	go func() {
+		reader := bufio.NewReader(inBuf)
 		for {
 			select {
-			case <-done:
-				return
-			case text, ok := <-chIn:
-				if !ok {
-					return
-				}
-				_, err := bufOut.Write([]byte(text))
-				if err != nil {
-					bufErr.Write([]byte(err.Error() + "\n"))
-					closeConn()
-					return
-				}
-			}
-		}
-	}()
-}
-
-func reader2chan(done <-chan struct{}, bufRead io.Reader, bufErr io.Writer, closeConn func() error) <-chan string {
-	out := make(chan string)
-	reader := bufio.NewReader(bufRead)
-	go func() {
-		defer close(out)
-		for {
-			select {
-			case <-done:
+			case <-t.done:
 				return
 			default:
 				text, err := reader.ReadString('\n')
 				if err != nil {
-					bufErr.Write([]byte(err.Error() + "\n"))
-					closeConn()
+					t.errWriter.Write([]byte(err.Error() + "\n"))
+					t.Close()
 					return
 				}
-				out <- text
+
+				_, err = outBuf.Write([]byte(text))
+				if err != nil {
+					t.errWriter.Write([]byte(err.Error() + "\n"))
+					t.Close()
+					return
+				}
 			}
 		}
 	}()
-	return out
 }

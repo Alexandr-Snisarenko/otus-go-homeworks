@@ -23,28 +23,26 @@ func main() {
 	pflag.DurationVar(&timeout, "timeout", 10, "timeout in second waiting for connection establishment")
 	pflag.Parse()
 
-	// // аргументы командной строки (адрес и порт) должно быть 2. если не 2 - ошибка.
-	// args := pflag.Args()
-	// if len(args) != 2 {
-	// 	fmt.Fprintf(os.Stderr, "Arguments count is wrong. Expected 2, recieved %d \n", len(args))
-	// 	return
-	// }
+	// аргументы командной строки (адрес и порт) должно быть 2. если не 2 - ошибка.
+	args := pflag.Args()
+	if len(args) != 2 {
+		fmt.Fprintf(os.Stderr, "Arguments count is wrong. Expected 2, recieved %d \n", len(args))
+		return
+	}
 
-	// // подключение к серверу
-	// addr := args[0] + ":" + args[1]
+	// подключение к серверу
+	addr := args[0] + ":" + args[1]
 
-	addr := "localhost:4242"
+	//	addr := "localhost:4242"
 
 	t := NewTelnetClient(addr, timeout, os.Stdin, os.Stdout, os.Stderr)
 
-	// контекст с отменой.
-	// ctx, cancel := context.WithCancel(context.Background())
-	waitCh, err := t.Connect(context.Background())
+	err := t.Connect(context.Background())
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Cannot connect to host %s. Error: %s\n", addr, err.Error())
 		return
 	}
 
-	<-waitCh
+	<-t.Done()
 
 }
