@@ -40,7 +40,7 @@ func (t *telnetClient) Connect(ctx context.Context) error {
 		return ErrConnectionAlreadyActive
 	}
 
-	conn, err := net.DialTimeout("tcp", t.address, t.timeout*time.Second)
+	conn, err := net.DialTimeout("tcp", t.address, t.timeout)
 	if err != nil {
 		return err
 	}

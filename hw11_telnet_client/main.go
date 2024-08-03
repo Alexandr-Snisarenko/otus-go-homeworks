@@ -31,6 +31,7 @@ func main() {
 	}
 
 	// подключение к серверу
+	timeout = timeout * time.Second
 	addr := args[0] + ":" + args[1]
 
 	//	addr := "localhost:4242"
