@@ -14,6 +14,8 @@ var (
 	ErrConnectionAlreadyActive = errors.New("connection is already active")
 )
 
+// интерфейс чуть поменялся. методы send и receive не включены в интерфейс,
+// так как в реализации используются потоковые данные
 type TelnetClient interface {
 	Connect(context.Context) error
 	Close() error
@@ -25,8 +27,8 @@ type TelnetClient interface {
 
 type telnetClient struct {
 	mu        sync.Mutex
-	active    bool
-	done      chan struct{}
+	active    bool          // признак активности коннекта
+	done      chan struct{} // канал завершения коннекта
 	address   string
 	timeout   time.Duration
 	inReader  io.Reader
@@ -40,18 +42,26 @@ func (t *telnetClient) Connect(ctx context.Context) error {
 		return ErrConnectionAlreadyActive
 	}
 
+	// пробуем подключиться с указанным таймаутом
 	conn, err := net.DialTimeout("tcp", t.address, t.timeout)
 	if err != nil {
 		return err
 	}
+	// если всё ок - переводим  active в true и создаем сигнальный канал
+	// код не защищаем - выполняется в начале работы и только из этого метода.
 	t.conn = conn
 	t.active = true
 	t.done = make(chan struct{})
 
+	// основная горутина объекта.
+	// запускает две дочерние горутины на чтение и на запись в потоки ввода вывода
+	// и ждет окончания работы: по сигнальному каналу объекта или по сигналу от контекста
 	go func() {
 		defer t.Close()
 
+		// запускаем горутину для чтения из входного потока телнет клиента (inReader) во входной поток соединения (connection)
 		t.inBuf2outBuff(t.inReader, t.conn)
+		// запускаем горутину для чтения из выходного потока соединения в выходной поток объекта (outReader)
 		t.inBuf2outBuff(t.conn, t.outWriter)
 
 		for {
@@ -69,6 +79,9 @@ func (t *telnetClient) Connect(ctx context.Context) error {
 }
 
 func (t *telnetClient) Close() error {
+	// меняем статус коннекта и соответственно закрываем сигнальный канал в мютексе
+	// так как закрытие может выполняться из разных горутин
+	// множественный вызов метода Close - допустим и не является проблемой
 	t.mu.Lock()
 	defer t.mu.Unlock()
 
@@ -89,10 +102,12 @@ func (t *telnetClient) Done() <-chan struct{} {
 	return t.done
 }
 
+// создаем новый объект клиента телнет. создается только новая структура без подключения
 func NewTelnetClient(address string, timeout time.Duration, inReader io.Reader, outWriter io.Writer, errWriter io.Writer) TelnetClient {
 	return &telnetClient{active: false, address: address, timeout: timeout, inReader: inReader, outWriter: outWriter, errWriter: errWriter}
 }
 
+// горутина переносит данные из одного буферизированного потока в другой
 func (t *telnetClient) inBuf2outBuff(inBuf io.Reader, outBuf io.Writer) {
 	go func() {
 		reader := bufio.NewReader(inBuf)

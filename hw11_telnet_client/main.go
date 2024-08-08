@@ -30,20 +30,22 @@ func main() {
 		return
 	}
 
-	// подключение к серверу
+	// переводим в секунды
 	timeout = timeout * time.Second
+	// формируем строку адрес:порт из аргументов командной сроки
 	addr := args[0] + ":" + args[1]
 
-	//	addr := "localhost:4242"
-
+	// создаем объект телнет клиента. в качетсве потоков данных указываем std[in|out|err]
 	t := NewTelnetClient(addr, timeout, os.Stdin, os.Stdout, os.Stderr)
 
+	// пробуем подключиться. если ошибка - выводим её в stderr
 	err := t.Connect(context.Background())
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Cannot connect to host %s. Error: %s\n", addr, err.Error())
 		return
 	}
 
+	// ждем завершения работы телнет клиента
 	<-t.Done()
 
 }

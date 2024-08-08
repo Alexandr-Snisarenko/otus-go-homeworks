@@ -3,7 +3,6 @@ package main
 import (
 	"bufio"
 	"context"
-	"fmt"
 	"io"
 	"net"
 	"sync"
@@ -24,7 +23,8 @@ func TestTelnetClient(t *testing.T) {
 
 		go func() {
 			defer wg.Done()
-			
+
+			// для тестирования создаем потоковые данные через объекты io.pipe
 			inReader, inWriter := io.Pipe()
 			outReader, outWriter := io.Pipe()
 			errReader, errWriter := io.Pipe()
@@ -38,7 +38,8 @@ func TestTelnetClient(t *testing.T) {
 			require.NoError(t, client.Connect(ctx))
 			defer func() { require.NoError(t, client.Close()) }()
 
-			inWriter.Write([]byte("hello\n"))
+			_, err = inWriter.Write([]byte("hello\n"))
+			require.NoError(t, err)
 
 			reader := bufio.NewReader(outReader)
 			s, err := reader.ReadString('\n')
@@ -47,7 +48,6 @@ func TestTelnetClient(t *testing.T) {
 
 			errOut := bufio.NewReader(errReader)
 			s, err = errOut.ReadString('\n')
-			fmt.Println(s)
 			require.NoError(t, err)
 			require.Equal(t, "EOF\n", s)
 
