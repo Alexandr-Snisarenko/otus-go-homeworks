@@ -26,12 +26,12 @@ func main() {
 	// аргументы командной строки (адрес и порт) должно быть 2. если не 2 - ошибка.
 	args := pflag.Args()
 	if len(args) != 2 {
-		fmt.Fprintf(os.Stderr, "Arguments count is wrong. Expected 2, recieved %d \n", len(args))
+		fmt.Fprintf(os.Stderr, "Arguments count is wrong. Expected 2, received %d \n", len(args))
 		return
 	}
 
 	// переводим в секунды
-	timeout = timeout * time.Second
+	timeout *= time.Second
 	// формируем строку адрес:порт из аргументов командной сроки
 	addr := args[0] + ":" + args[1]
 
@@ -47,5 +47,4 @@ func main() {
 
 	// ждем завершения работы телнет клиента
 	<-t.Done()
-
 }

@@ -29,7 +29,7 @@ func TestTelnetClient(t *testing.T) {
 			outReader, outWriter := io.Pipe()
 			errReader, errWriter := io.Pipe()
 
-			ctx := context.Context(context.Background())
+			ctx := context.Background()
 
 			timeout, err := time.ParseDuration("10s")
 			require.NoError(t, err)

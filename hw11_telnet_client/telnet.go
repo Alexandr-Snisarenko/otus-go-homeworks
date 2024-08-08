@@ -10,12 +10,10 @@ import (
 	"time"
 )
 
-var (
-	ErrConnectionAlreadyActive = errors.New("connection is already active")
-)
+var ErrConnectionAlreadyActive = errors.New("connection is already active")
 
 // интерфейс чуть поменялся. методы send и receive не включены в интерфейс,
-// так как в реализации используются потоковые данные
+// так как в реализации используются потоковые данные.
 type TelnetClient interface {
 	Connect(context.Context) error
 	Close() error
@@ -73,7 +71,6 @@ func (t *telnetClient) Connect(ctx context.Context) error {
 				return
 			}
 		}
-
 	}()
 	return nil
 }
@@ -102,12 +99,21 @@ func (t *telnetClient) Done() <-chan struct{} {
 	return t.done
 }
 
-// создаем новый объект клиента телнет. создается только новая структура без подключения
-func NewTelnetClient(address string, timeout time.Duration, inReader io.Reader, outWriter io.Writer, errWriter io.Writer) TelnetClient {
-	return &telnetClient{active: false, address: address, timeout: timeout, inReader: inReader, outWriter: outWriter, errWriter: errWriter}
+// создаем новый объект клиента телнет. создается только новая структура без подключения.
+func NewTelnetClient(address string, timeout time.Duration,
+	inReader io.Reader, outWriter io.Writer, errWriter io.Writer,
+) TelnetClient {
+	return &telnetClient{
+		active:    false,
+		address:   address,
+		timeout:   timeout,
+		inReader:  inReader,
+		outWriter: outWriter,
+		errWriter: errWriter,
+	}
 }
 
-// горутина переносит данные из одного буферизированного потока в другой
+// горутина переносит данные из одного буферизированного потока в другой.
 func (t *telnetClient) inBuf2outBuff(inBuf io.Reader, outBuf io.Writer) {
 	go func() {
 		reader := bufio.NewReader(inBuf)
