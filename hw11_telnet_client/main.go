@@ -2,12 +2,12 @@ package main
 
 import (
 	"context"
+	"flag"
 	"fmt"
 	"log/slog"
+	"net"
 	"os"
 	"time"
-
-	"github.com/spf13/pflag"
 )
 
 func main() {
@@ -20,11 +20,11 @@ func main() {
 	slog.SetDefault(log)
 
 	// таймаут подключения к серверу. по умолчанию 10 сек.
-	pflag.DurationVar(&timeout, "timeout", 10, "timeout in second waiting for connection establishment")
-	pflag.Parse()
+	flag.DurationVar(&timeout, "timeout", 10, "timeout in second waiting for connection establishment")
+	flag.Parse()
 
 	// аргументы командной строки (адрес и порт) должно быть 2. если не 2 - ошибка.
-	args := pflag.Args()
+	args := flag.Args()
 	if len(args) != 2 {
 		fmt.Fprintf(os.Stderr, "Arguments count is wrong. Expected 2, received %d \n", len(args))
 		return
@@ -33,7 +33,7 @@ func main() {
 	// переводим в секунды
 	timeout *= time.Second
 	// формируем строку адрес:порт из аргументов командной сроки
-	addr := args[0] + ":" + args[1]
+	addr := net.JoinHostPort(args[0], args[1])
 
 	// создаем объект телнет клиента. в качетсве потоков данных указываем std[in|out|err]
 	t := NewTelnetClient(addr, timeout, os.Stdin, os.Stdout, os.Stderr)

@@ -10,7 +10,10 @@ import (
 	"time"
 )
 
-var ErrConnectionAlreadyActive = errors.New("connection is already active")
+var (
+	ErrConnectionAlreadyActive = errors.New("connection is already active")
+	ErrConnectionNotActive     = errors.New("connection is not active")
+)
 
 // интерфейс чуть поменялся. методы send и receive не включены в интерфейс,
 // так как в реализации используются потоковые данные.
@@ -51,27 +54,11 @@ func (t *telnetClient) Connect(ctx context.Context) error {
 	t.active = true
 	t.done = make(chan struct{})
 
-	// основная горутина объекта.
-	// запускает две дочерние горутины на чтение и на запись в потоки ввода вывода
-	// и ждет окончания работы: по сигнальному каналу объекта или по сигналу от контекста
-	go func() {
-		defer t.Close()
+	// запускаем основную горутину клиента
+	if err := t.startClient(ctx); err != nil {
+		return err
+	}
 
-		// запускаем горутину для чтения из входного потока телнет клиента (inReader) во входной поток соединения (connection)
-		t.inBuf2outBuff(t.inReader, t.conn)
-		// запускаем горутину для чтения из выходного потока соединения в выходной поток объекта (outReader)
-		t.inBuf2outBuff(t.conn, t.outWriter)
-
-		for {
-			select {
-			case <-t.done:
-				return
-			case <-ctx.Done():
-				t.Close()
-				return
-			}
-		}
-	}()
 	return nil
 }
 
@@ -111,6 +98,31 @@ func NewTelnetClient(address string, timeout time.Duration,
 		outWriter: outWriter,
 		errWriter: errWriter,
 	}
+}
+
+// основная горутина объекта.
+// запускает две дочерние горутины на чтение и на запись в потоки ввода вывода
+// и ждет окончания работы: по сигнальному каналу объекта или по сигналу от контекста
+func (t *telnetClient) startClient(ctx context.Context) error {
+	if !t.active {
+		return ErrConnectionNotActive
+	}
+
+	go func() {
+		// запускаем горутину для чтения из входного потока телнет клиента (inReader) во входной поток соединения (connection)
+		t.inBuf2outBuff(t.inReader, t.conn)
+		// запускаем горутину для чтения из выходного потока соединения в выходной поток объекта (outReader)
+		t.inBuf2outBuff(t.conn, t.outWriter)
+
+		select {
+		case <-t.done:
+			return
+		case <-ctx.Done():
+			t.Close()
+			return
+		}
+	}()
+	return nil
 }
 
 // горутина переносит данные из одного буферизированного потока в другой.
