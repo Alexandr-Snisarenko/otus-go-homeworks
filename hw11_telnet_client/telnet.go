@@ -102,7 +102,7 @@ func NewTelnetClient(address string, timeout time.Duration,
 
 // основная горутина объекта.
 // запускает две дочерние горутины на чтение и на запись в потоки ввода вывода
-// и ждет окончания работы: по сигнальному каналу объекта или по сигналу от контекста
+// и ждет окончания работы: по сигнальному каналу объекта или по сигналу от контекста.
 func (t *telnetClient) startClient(ctx context.Context) error {
 	if !t.active {
 		return ErrConnectionNotActive
