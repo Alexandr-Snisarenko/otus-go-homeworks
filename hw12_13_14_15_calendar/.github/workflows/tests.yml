@@ -7,7 +7,9 @@ on:
 
 env:
   GO111MODULE: "on"
-
+  GOLANG_VERSION: ~1.23
+  GOLANGCI_LINT_VERSION: v1.63.4
+  
 jobs:
   lint:
     runs-on: ubuntu-latest
@@ -19,7 +21,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v3
         with:
-          go-version: ~1.22
+          go-version: ${{ env.GOLANG_VERSION }}
 
       - name: Check out code
         uses: actions/checkout@v3
@@ -27,7 +29,7 @@ jobs:
       - name: Linters
         uses: golangci/golangci-lint-action@v3
         with:
-          version: v1.59.1
+          version: ${{ env.GOLANGCI_LINT_VERSION }}
           working-directory: ${{ env.BRANCH }}
 
   tests:
@@ -40,7 +42,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v3
         with:
-          go-version: ^1.19
+          go-version: ${{ env.GOLANG_VERSION }}
 
       - name: Check out code
         uses: actions/checkout@v3
@@ -67,19 +69,19 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v3
         with:
-          go-version: ^1.19
+          go-version: ${{ env.GOLANG_VERSION }}
 
       - name: Check out code
         uses: actions/checkout@v3
 
       - name: make lint
         run: make lint
-        working-directory: hw12_13_14_15_calendar
+        working-directory: hw12_13_14_15_16_calendar
 
       - name: make build
         run: make build
-        working-directory: hw12_13_14_15_calendar
+        working-directory: hw12_13_14_15_16_calendar
 
       - name: make test
         run: make test
-        working-directory: hw12_13_14_15_calendar
+        working-directory: hw12_13_14_15_16_calendar
