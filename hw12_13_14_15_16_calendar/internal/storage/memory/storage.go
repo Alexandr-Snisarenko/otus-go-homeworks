@@ -7,8 +7,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Alexandr-Snisarenko/otus-go-homeworks/hw12_13_14_15_calendar/internal/domain"
-	"github.com/Alexandr-Snisarenko/otus-go-homeworks/hw12_13_14_15_calendar/internal/storage"
+	"github.com/Alexandr-Snisarenko/otus-go-homeworks/hw12_13_14_15_16_calendar/internal/domain"
+	"github.com/Alexandr-Snisarenko/otus-go-homeworks/hw12_13_14_15_16_calendar/internal/storage"
 )
 
 type Storage struct {
@@ -87,7 +87,7 @@ func (s *Storage) Close() error {
 
 func NewID() int64 {
 	now := time.Now().UnixNano()       // наносекунды (int64)
-	randPart := rand.Int63n(1_000_000) // //nolint:gosec // not used for security
+	randPart := rand.Int63n(1_000_000) //nolint:gosec // not used for security
 	return now*1_000_000 + randPart
 }
 

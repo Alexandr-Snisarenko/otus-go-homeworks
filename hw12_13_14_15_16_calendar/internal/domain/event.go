@@ -11,13 +11,13 @@ import "time"
 // ID пользователя, владельца события;
 // За сколько времени высылать уведомление, опционально.
 type Event struct {
-	ID           int64         `db:"id"`
-	Title        string        `db:"title"`
-	Description  string        `db:"description"`
-	StartTime    time.Time     `db:"start_time"`
-	EndTime      time.Time     `db:"end_time"`
-	UserID       int64         `db:"user_id"`
-	NotifyPeriod time.Duration `db:"notify_period"`
+	ID           int64
+	Title        string
+	Description  string
+	StartTime    time.Time
+	EndTime      time.Time
+	UserID       int64
+	NotifyPeriod time.Duration
 }
 
 type EventFilter struct {

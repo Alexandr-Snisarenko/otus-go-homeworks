@@ -5,8 +5,8 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/Alexandr-Snisarenko/otus-go-homeworks/hw12_13_14_15_calendar/internal/config"
-	"github.com/Alexandr-Snisarenko/otus-go-homeworks/hw12_13_14_15_calendar/internal/domain"
+	"github.com/Alexandr-Snisarenko/otus-go-homeworks/hw12_13_14_15_16_calendar/internal/config"
+	"github.com/Alexandr-Snisarenko/otus-go-homeworks/hw12_13_14_15_16_calendar/internal/domain"
 	sq "github.com/Masterminds/squirrel"
 	_ "github.com/jackc/pgx/v4/stdlib" // register pgx driver
 	"github.com/jmoiron/sqlx"
@@ -26,7 +26,7 @@ func (s *Storage) CreateEvent(ctx context.Context, event *domain.Event) error {
     VALUES (:title, :description, :start_time, :end_time, :user_id, :notify_period)
     RETURNING id`
 
-	stmt, args, _ := sqlx.Named(query, event)
+	stmt, args, _ := sqlx.Named(query, fromDomainEvent(event))
 	stmt = s.db.Rebind(stmt)
 
 	return s.db.QueryRowContext(ctx, stmt, args...).Scan(&event.ID)
@@ -48,7 +48,7 @@ func (s *Storage) UpdateEvent(ctx context.Context, event *domain.Event) error {
         WHERE id = :id
     `
 
-	res, err := s.db.NamedExecContext(ctx, query, event)
+	res, err := s.db.NamedExecContext(ctx, query, fromDomainEvent(event))
 	if err != nil {
 		return err
 	}
@@ -92,12 +92,12 @@ func (s *Storage) GetEvent(ctx context.Context, id int64) (*domain.Event, error)
         WHERE id = $1
     `
 
-	var event domain.Event
+	var event eventRow
 	if err := s.db.GetContext(ctx, &event, query, id); err != nil {
 		return nil, err
 	}
 
-	return &event, nil
+	return event.toDomain(), nil
 }
 
 func (s *Storage) GetEvents(ctx context.Context, filter domain.EventFilter) ([]*domain.Event, error) {
@@ -125,11 +125,11 @@ func (s *Storage) GetEvents(ctx context.Context, filter domain.EventFilter) ([]*
 		return nil, err
 	}
 
-	var events []*domain.Event
+	var events []eventRow
 	if err := s.db.SelectContext(ctx, &events, query, args...); err != nil {
 		return nil, err
 	}
-	return events, nil
+	return toDomainEvents(events), nil
 }
 
 func (s *Storage) Close() error {
