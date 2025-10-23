@@ -16,6 +16,74 @@ type Storage struct {
 	db *sqlx.DB
 }
 
+// Создает нового пользователя и обновляет ID созданного пользователя в структуре user.
+func (s *Storage) CreateUser(ctx context.Context, user *domain.User) error {
+	if user == nil {
+		return errors.New("user is nil")
+	}
+	const query = `
+		INSERT INTO users (name, email)
+		VALUES (:name, :email)
+		RETURNING id`
+	stmt, args, _ := sqlx.Named(query, fromDomainUser(user))
+	stmt = s.db.Rebind(stmt)
+	return s.db.QueryRowContext(ctx, stmt, args...).Scan(&user.ID)
+}
+
+func (s *Storage) UpdateUser(ctx context.Context, user *domain.User) error {
+	if user == nil {
+		return errors.New("user is nil")
+	}
+	const query = `
+		UPDATE users SET
+			name = :name,
+			email = :email
+		WHERE id = :id
+	`
+	res, err := s.db.NamedExecContext(ctx, query, fromDomainUser(user))
+	if err != nil {
+		return err
+	}
+	rows, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rows == 0 {
+		return errors.New("user not found")
+	}
+	return nil
+}
+
+func (s *Storage) DeleteUser(ctx context.Context, userID int64) error {
+	const query = `DELETE FROM users WHERE id = $1`
+	res, err := s.db.ExecContext(ctx, query, userID)
+	if err != nil {
+		return err
+	}
+	rows, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rows == 0 {
+		return errors.New("user not found")
+	}
+	return nil
+}
+
+func (s *Storage) GetUser(ctx context.Context, id int64) (*domain.User, error) {
+	const query = `
+		SELECT id, name, email
+		FROM users
+		WHERE id = $1
+	`
+	var user userRow
+	if err := s.db.GetContext(ctx, &user, query, id); err != nil {
+		return nil, err
+	}
+	return user.toDomain(), nil
+}
+
+// Создает новое событие и обновляет ID созданного события в структуре event.
 func (s *Storage) CreateEvent(ctx context.Context, event *domain.Event) error {
 	if event == nil {
 		return domain.ErrEventIsEmpty

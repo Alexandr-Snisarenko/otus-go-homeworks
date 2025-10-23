@@ -13,7 +13,6 @@ import (
 	"github.com/Alexandr-Snisarenko/otus-go-homeworks/hw12_13_14_15_16_calendar/internal/config"
 	"github.com/Alexandr-Snisarenko/otus-go-homeworks/hw12_13_14_15_16_calendar/internal/logger"
 	httpsrv "github.com/Alexandr-Snisarenko/otus-go-homeworks/hw12_13_14_15_16_calendar/internal/server/http"
-	"github.com/Alexandr-Snisarenko/otus-go-homeworks/hw12_13_14_15_16_calendar/internal/storage"
 	"github.com/Alexandr-Snisarenko/otus-go-homeworks/hw12_13_14_15_16_calendar/internal/storage/memory"
 	"github.com/Alexandr-Snisarenko/otus-go-homeworks/hw12_13_14_15_16_calendar/internal/storage/postgresql"
 )
@@ -22,8 +21,40 @@ import (
 
 var configFile string
 
+// storage объединяет в себе интерфейс хранилища и функцию закрытия.
+type storage struct {
+	app.Storage
+	close func() error
+}
+
 func init() {
 	flag.StringVar(&configFile, "config", "/etc/calendar/config.toml", "Path to configuration file")
+}
+
+// buildStorage создаёт хранилище в соответствии с конфигурацией.
+func buildStorage(cfg config.Database) (storage, error) {
+	switch cfg.Workmode {
+	case "postgres":
+		pg, err := postgresql.New(cfg)
+		if err != nil {
+			return storage{}, err
+		}
+
+		return storage{
+			pg,
+			func() error { return pg.Close() },
+		}, nil
+
+	case "memory":
+		mem := memory.New()
+		return storage{
+			mem,
+			func() error { return nil },
+		}, nil
+
+	default:
+		return storage{}, fmt.Errorf("unknown workmode: %q", cfg.Workmode)
+	}
 }
 
 func main() {
@@ -34,8 +65,6 @@ func main() {
 }
 
 func run() error {
-	var storage storage.EventStorage
-
 	flag.Parse()
 
 	if flag.Arg(0) == "version" {
@@ -49,20 +78,11 @@ func run() error {
 	}
 
 	logg := logger.New(&cfg.Logger)
-
-	switch cfg.Database.Workmode {
-	case "memory":
-		storage = memory.New()
-	case "postgresql":
-		if storage, err = postgresql.New(cfg.Database); err != nil {
-			logg.Error("Storage init error", "error", err)
-			return err
-		}
-	default:
-		return fmt.Errorf("unknown database mode: %s", cfg.Database.Workmode)
+	storage, err := buildStorage(cfg.Database)
+	if err != nil {
+		return fmt.Errorf("storage build: %w", err)
 	}
-
-	defer storage.Close()
+	defer storage.close()
 
 	calendar := app.New(logg, storage)
 

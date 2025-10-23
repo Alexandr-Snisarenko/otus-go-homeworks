@@ -8,49 +8,57 @@ import (
 	"strings"
 
 	internalcfg "github.com/Alexandr-Snisarenko/otus-go-homeworks/hw12_13_14_15_16_calendar/internal/config"
+	"github.com/Alexandr-Snisarenko/otus-go-homeworks/hw12_13_14_15_16_calendar/internal/ctxmeta"
 )
 
 type Logger struct {
-	innerLog *slog.Logger
+	*slog.Logger
 }
 
-// Non-context wrappers.
-func (l *Logger) Info(msg string, v ...any) {
-	l.innerLog.Info(msg, v...)
-}
+// Обогащаем логгер полями из контекста.
+func (l *Logger) withCtx(ctx context.Context) *slog.Logger {
 
-func (l *Logger) Error(msg string, v ...any) {
-	l.innerLog.Error(msg, v...)
-}
+	if l == nil || l.Logger == nil {
+		return slog.Default()
+	}
+	if ctx == nil {
+		return l.Logger
+	}
 
-func (l *Logger) Fatal(msg string, v ...any) {
-	l.innerLog.Error(msg, v...)
-	os.Exit(1)
-}
+	//собираем поля из контекста
+	attrs := make([]any, 0, 6)
 
-func (l *Logger) Debug(msg string, v ...any) {
-	l.innerLog.Debug(msg, v...)
-}
+	if rid, ok := ctxmeta.RequestID(ctx); ok {
+		attrs = append(attrs, "request_id", rid)
+	}
+	if uid, ok := ctxmeta.UserID(ctx); ok {
+		attrs = append(attrs, "user_id", uid)
+	}
+	if tid, ok := ctxmeta.TraceID(ctx); ok {
+		attrs = append(attrs, "trace_id", tid)
+	}
 
-func (l *Logger) Warn(msg string, v ...any) {
-	l.innerLog.Warn(msg, v...)
+	if len(attrs) == 0 {
+		return l.Logger
+	}
+	return l.With(attrs...)
 }
 
 // Context-aware wrappers.
-func (l *Logger) InfoCtx(ctx context.Context, msg string, v ...any) {
-	l.innerLog.InfoContext(ctx, msg, v...)
+func (l *Logger) InfoContext(ctx context.Context, msg string, v ...any) {
+	l.withCtx(ctx).InfoContext(ctx, msg, v...)
 }
 
-func (l *Logger) ErrorCtx(ctx context.Context, msg string, v ...any) {
-	l.innerLog.ErrorContext(ctx, msg, v...)
+func (l *Logger) ErrorContext(ctx context.Context, msg string, v ...any) {
+	l.withCtx(ctx).ErrorContext(ctx, msg, v...)
 }
 
-func (l *Logger) DebugCtx(ctx context.Context, msg string, v ...any) {
-	l.innerLog.DebugContext(ctx, msg, v...)
+func (l *Logger) DebugContext(ctx context.Context, msg string, v ...any) {
+	l.withCtx(ctx).DebugContext(ctx, msg, v...)
 }
 
-func (l *Logger) WarnCtx(ctx context.Context, msg string, v ...any) {
-	l.innerLog.WarnContext(ctx, msg, v...)
+func (l *Logger) WarnContext(ctx context.Context, msg string, v ...any) {
+	l.withCtx(ctx).WarnContext(ctx, msg, v...)
 }
 
 // New - создаём логгер на базе slog
@@ -59,7 +67,7 @@ func (l *Logger) WarnCtx(ctx context.Context, msg string, v ...any) {
 func New(logCfg *internalcfg.Logger) *Logger {
 	lvl := parseLevel(logCfg.Level)
 	hdlr := slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: lvl})
-	return &Logger{innerLog: slog.New(hdlr)}
+	return &Logger{slog.New(hdlr)}
 }
 
 // NewWithWriter позволяет писать в io.Writer. Для тестирования
@@ -70,7 +78,7 @@ func NewWithWriter(w io.Writer, logCfg *internalcfg.Logger) *Logger {
 	}
 	lvl := parseLevel(logCfg.Level)
 	hdlr := slog.NewTextHandler(w, &slog.HandlerOptions{Level: lvl})
-	return &Logger{innerLog: slog.New(hdlr)}
+	return &Logger{slog.New(hdlr)}
 }
 
 func parseLevel(s string) slog.Level {

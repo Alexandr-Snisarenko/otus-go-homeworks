@@ -1,0 +1,9 @@
+package: api
+v1generate:
+  models: true
+  chi-server: true
+  strict-server: true
+output: internal/api/openapi/v1/openapi.gen.go
+# output-options:
+#   skip-prune: true
+#   include-tags: []

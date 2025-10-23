@@ -163,3 +163,40 @@ func TestConcurrentCreateUniqueness(t *testing.T) {
 		seen[e.ID] = struct{}{}
 	}
 }
+
+func TestUserCRUD(t *testing.T) {
+	s := New()
+	user := &domain.User{Name: "Alice", Email: "alice@example.com"}
+	// Create
+	if err := s.CreateUser(ctx, user); err != nil {
+		t.Fatalf("CreateUser error: %v", err)
+	}
+	if user.ID == 0 {
+		t.Fatalf("expected non-zero user ID assigned")
+	}
+	// Get
+	got, err := s.GetUser(ctx, user.ID)
+	if err != nil {
+		t.Fatalf("GetUser error: %v", err)
+	}
+	if got == nil || got.ID != user.ID || got.Name != user.Name {
+		t.Fatalf("GetUser returned wrong user: %#v", got)
+	}
+	// Update
+	user.Name = "Bob"
+	if err := s.UpdateUser(ctx, user); err != nil {
+		t.Fatalf("UpdateUser error: %v", err)
+	}
+	got, err = s.GetUser(ctx, user.ID)
+	if err != nil || got.Name != "Bob" {
+		t.Fatalf("UpdateUser failed: %#v, err=%v", got, err)
+	}
+	// Delete
+	if err := s.DeleteUser(ctx, user.ID); err != nil {
+		t.Fatalf("DeleteUser error: %v", err)
+	}
+	got, err = s.GetUser(ctx, user.ID)
+	if err == nil {
+		t.Fatalf("expected error after DeleteUser, got user: %#v", got)
+	}
+}

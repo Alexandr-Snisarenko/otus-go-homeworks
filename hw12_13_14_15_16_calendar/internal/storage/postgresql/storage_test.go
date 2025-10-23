@@ -234,3 +234,54 @@ func TestOpenDB_DSNFromConfig(t *testing.T) {
 		t.Fatalf("expected error for non-postgresql workmode")
 	}
 }
+
+func TestUserCRUD(t *testing.T) {
+	s, mock, closeFn := newStorageWithMock()
+	defer closeFn()
+	ctx := context.Background()
+	user := &domain.User{Name: "Alice", Email: "alice@example.com"}
+	// Create
+	mock.ExpectQuery(regexp.QuoteMeta(`INSERT INTO users (name, email)
+		VALUES ($1, $2)
+		RETURNING id`)).
+		WithArgs(user.Name, user.Email).
+		WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(int64(42)))
+	if err := s.CreateUser(ctx, user); err != nil {
+		t.Fatalf("CreateUser error: %v", err)
+	}
+	if user.ID != 42 {
+		t.Fatalf("expected returned ID=42, got %d", user.ID)
+	}
+	// Get
+	mock.ExpectQuery(regexp.QuoteMeta(`SELECT id, name, email FROM users WHERE id = $1`)).
+		WithArgs(user.ID).
+		WillReturnRows(sqlmock.NewRows([]string{"id", "name", "email"}).AddRow(user.ID, user.Name, user.Email))
+	got, err := s.GetUser(ctx, user.ID)
+	if err != nil {
+		t.Fatalf("GetUser error: %v", err)
+	}
+	if got == nil || got.ID != user.ID || got.Name != user.Name {
+		t.Fatalf("GetUser returned wrong user: %#v", got)
+	}
+	// Update
+	user.Name = "Bob"
+	mock.ExpectExec(regexp.QuoteMeta(`UPDATE users SET
+			name = $1,
+			email = $2
+		WHERE id = $3`)).
+		WithArgs(user.Name, user.Email, user.ID).
+		WillReturnResult(sqlmock.NewResult(0, 1))
+	if err := s.UpdateUser(ctx, user); err != nil {
+		t.Fatalf("UpdateUser error: %v", err)
+	}
+	// Delete
+	mock.ExpectExec(regexp.QuoteMeta(`DELETE FROM users WHERE id = $1`)).
+		WithArgs(user.ID).
+		WillReturnResult(sqlmock.NewResult(0, 1))
+	if err := s.DeleteUser(ctx, user.ID); err != nil {
+		t.Fatalf("DeleteUser error: %v", err)
+	}
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("unmet expectations: %v", err)
+	}
+}

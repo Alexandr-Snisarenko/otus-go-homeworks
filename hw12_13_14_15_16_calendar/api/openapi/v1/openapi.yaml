@@ -1,0 +1,257 @@
+openapi: 3.0.4
+info:
+  title: Calendar API
+  version: 1.0.0
+servers:
+  - url: http://localhost:8080/api/v1
+
+paths:
+  # ------- Events -------
+  /events:
+    get:
+      summary: List events
+      description: Возвращает список событий с фильтрами по времени и пользователю.
+      parameters:
+        - in: query
+          name: date_from
+          description: Начало интервала (включительно) rfc 3339 формат "YYYY-MM-DDTHH:MM:SSZ"
+          schema: { type: string, format: date-time, example: "2024-01-01T00:00:00Z" }
+        - in: query
+          name: date_to
+          description: Конец интервала (включительно) rfc 3339 формат "YYYY-MM-DDTHH:MM:SSZ"
+          schema: { type: string, format: date-time, example: "2024-01-31T23:59:59Z" }
+        - in: query
+          name: user_id
+          description: Фильтр по владельцу события - id пользователя
+          schema: { type: integer, format: int64 }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Event" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "500": { $ref: "#/components/responses/InternalError" }
+
+    post:
+      summary: Create event
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/EventCreate" }
+      responses:
+        "201":
+          description: Created
+          headers:
+            Location:
+              description: URL созданного ресурса
+              schema: { type: string }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Event" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "500": { $ref: "#/components/responses/InternalError" }
+
+  /events/{id}:
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema: { type: integer, format: int64 }
+
+    get:
+      summary: Get event by id
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Event" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "500": { $ref: "#/components/responses/InternalError" }
+
+    put:
+      summary: Replace event
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/EventUpdatePut" }
+      responses:
+        "200":
+          description: Replaced
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Event" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "500": { $ref: "#/components/responses/InternalError" }
+
+    delete:
+      summary: Delete event
+      responses:
+        "204":
+          description: Deleted (no content)
+        "404": { $ref: "#/components/responses/NotFound" }
+        "500": { $ref: "#/components/responses/InternalError" }
+
+  # ------- Users -------
+  /users:
+    post:
+      summary: Create user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/UserCreate" }
+      responses:
+        "201":
+          description: Created
+          headers:
+            Location:
+              description: URL созданного ресурса
+              schema: { type: string }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/User" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "500": { $ref: "#/components/responses/InternalError" }
+
+  /users/{id}:
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema: { type: integer, format: int64 }
+
+    get:
+      summary: Get user by id
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/User" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "500": { $ref: "#/components/responses/InternalError" }
+
+    put:
+      summary: Replace user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/UserUpdatePut" }
+      responses:
+        "200":
+          description: Replaced
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/User" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "500": { $ref: "#/components/responses/InternalError" }
+
+    delete:
+      summary: Delete user
+      responses:
+        "204":
+          description: Deleted (no content)
+        "404": { $ref: "#/components/responses/NotFound" }
+        "500": { $ref: "#/components/responses/InternalError" }
+
+components:
+  schemas:
+    # ---------- Event ----------
+    Event:
+      type: object
+      required: [id, title, start_time, end_time, user_id]
+      properties:
+        id:            { type: integer, format: int64 }
+        title:         { type: string, minLength: 1, maxLength: 200 }
+        description:   { type: string, nullable: true, maxLength: 2000 }
+        start_time:    { type: string, format: date-time, example: "2024-01-01T00:00:00Z" }
+        end_time:      { type: string, format: date-time, example: "2024-01-31T23:59:59Z" }
+        user_id:       { type: integer, format: int64 }
+        notify_period:
+          type: string
+          nullable: true
+          description: Продолжительность уведомления (например, "15m", "1h"). Сервер хранит как time.Duration.
+
+    EventCreate:
+      type: object
+      required: [title, start_time, end_time, user_id]
+      properties:
+        title:         { type: string, minLength: 1, maxLength: 200 }
+        description:   { type: string, nullable: true, maxLength: 2000 }
+        start_time:    { type: string, format: date-time, example: "2024-01-01T00:00:00Z" }
+        end_time:      { type: string, format: date-time, example: "2024-01-31T23:59:59Z" }
+        user_id:       { type: integer, format: int64 }
+        notify_period: { type: string, nullable: true }
+
+    EventUpdatePut:
+      allOf:
+        - $ref: "#/components/schemas/Event"
+
+
+    # ---------- User ----------
+    User:
+      type: object
+      required: [id, name, email]
+      properties:
+        id:    { type: integer, format: int64 }
+        name:  { type: string, minLength: 1, maxLength: 200 }
+        email: { type: string, format: email, maxLength: 320 }
+
+    UserCreate:
+      type: object
+      required: [name, email]
+      properties:
+        name:  { type: string, minLength: 1, maxLength: 200 }
+        email: { type: string, format: email, maxLength: 320 }
+
+    UserUpdatePut:
+      allOf:
+        - $ref: "#/components/schemas/User"
+
+
+    # ---------- Error ----------
+    Error:
+      type: object
+      required: [code, message]
+      properties:
+        code:    { type: string }
+        message: { type: string }
+        details: { type: object, additionalProperties: true, nullable: true }
+
+  responses:
+    BadRequest:
+      description: Некорректный запрос
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+
+    NotFound:
+      description: Ресурс не найден
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+
+    Conflict:
+      description: Конфликт (например, пересечение событий, уникальность email)
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+
+    InternalError:
+      description: Внутренняя ошибка сервера
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }

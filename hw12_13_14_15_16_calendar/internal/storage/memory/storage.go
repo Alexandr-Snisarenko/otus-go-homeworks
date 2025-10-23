@@ -8,11 +8,11 @@ import (
 	"time"
 
 	"github.com/Alexandr-Snisarenko/otus-go-homeworks/hw12_13_14_15_16_calendar/internal/domain"
-	"github.com/Alexandr-Snisarenko/otus-go-homeworks/hw12_13_14_15_16_calendar/internal/storage"
 )
 
 type Storage struct {
 	events map[int64]*domain.Event
+	users  map[int64]*domain.User
 	mu     sync.RWMutex
 }
 
@@ -81,6 +81,52 @@ func (s *Storage) GetEvents(_ context.Context, filter domain.EventFilter) ([]*do
 	return events, nil
 }
 
+// --- Методы для работы с User ---
+func (s *Storage) CreateUser(_ context.Context, user *domain.User) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	userID := NewID()
+	user.ID = userID
+	if s.users == nil {
+		s.users = make(map[int64]*domain.User)
+	}
+	s.users[userID] = user
+	return nil
+}
+
+func (s *Storage) UpdateUser(_ context.Context, user *domain.User) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if s.users == nil {
+		s.users = make(map[int64]*domain.User)
+	}
+	s.users[user.ID] = user
+	return nil
+}
+
+func (s *Storage) DeleteUser(_ context.Context, userID int64) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if s.users == nil {
+		return nil
+	}
+	delete(s.users, userID)
+	return nil
+}
+
+func (s *Storage) GetUser(_ context.Context, userID int64) (*domain.User, error) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	if s.users == nil {
+		return nil, domain.ErrEventNotFound
+	}
+	user, ok := s.users[userID]
+	if !ok {
+		return nil, domain.ErrEventNotFound
+	}
+	return user, nil
+}
+
 func (s *Storage) Close() error {
 	return nil
 }
@@ -91,6 +137,6 @@ func NewID() int64 {
 	return now*1_000_000 + randPart
 }
 
-func New() storage.EventStorage {
+func New() *Storage {
 	return &Storage{events: make(map[int64]*domain.Event)}
 }

@@ -36,6 +36,17 @@ run-rabbit:
 	-e RABBITMQ_DEFAULT_PASS=$(RABBIT_PASSWORD) \
 	rabbitmq:management
 
+OPENAPI=api/openapi/v1/openapi.yaml
+OUT=internal/api/v1
+PKG=apiv1
+
+generate-openapi:
+	oapi-codegen -generate types         -o $(OUT)/types.gen.go   -package $(PKG) $(OPENAPI)
+	oapi-codegen -generate strict-server  -o $(OUT)/server.gen.go  -package $(PKG) $(OPENAPI)
+	oapi-codegen -generate chi-server     -o $(OUT)/router.gen.go  -package $(PKG) $(OPENAPI)
+
+.PHONY: generate-openapi
+
 build:
 	go build -v -o $(BIN) -ldflags "$(LDFLAGS)" ./cmd/calendar
 
